@@ -1,2 +1,32 @@
-# e-commerce
-Shop Express – A modern, responsive front-end e-commerce web application built using HTML, Tailwind CSS, and JavaScript, featuring product browsing, cart management, wishlist, coupon system, order history, dark mode, and a simulated checkout experience.
+ A simple responsive website built using HTML, CSS, and JavaScript and hosted on GitHub Pages.
+👉 If GitHub asks for Website, paste your live link:
+https://your-username.github.io/repository-name/
+# HTML Website Project
+
+This is a beginner-friendly web project created using **HTML, CSS, and JavaScript**.
+The project is hosted using **GitHub Pages**.
+
+## 🚀 Live Demo
+🔗 https://your-username.github.io/repository-name/
+
+## 📌 Features
+- Clean and simple UI
+- Responsive design
+- Easy to understand code
+- Hosted for free on GitHub Pages
+
+## 🛠️ Technologies Used
+- HTML5
+- CSS3
+- JavaScript
+- GitHub Pages
+
+## 📂 Project Structure
+
+├── index.html
+├── style.css
+└── script.js
+
+📚 Purpose
+
+This project was created for learning and academic purposes as part of web development practice.
