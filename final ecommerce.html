@@ -1,0 +1,1118 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shop Express</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --bg-primary: #f5f5f5;
+      --bg-secondary: #ffffff;
+      --bg-header: #232f3e;
+      --text-primary: #232f3e;
+      --text-secondary: #666;
+      --border-color: #e5e5e5;
+      --card-shadow: rgba(0, 0, 0, 0.1);
+    }
+    
+    [data-theme="dark"] {
+      --bg-primary: #1a1a1a;
+      --bg-secondary: #2d2d2d;
+      --bg-header: #0a0a0a;
+      --text-primary: #ffffff;
+      --text-secondary: #b0b0b0;
+      --border-color: #404040;
+      --card-shadow: rgba(0, 0, 0, 0.3);
+    }
+    
+    body {
+      box-sizing: border-box;
+      background: var(--bg-primary) !important;
+      color: var(--text-primary);
+      transition: background 0.3s, color 0.3s;
+    }
+    
+    .product-card {
+      transition: transform 0.2s, box-shadow 0.2s, background 0.3s;
+      background: var(--bg-secondary) !important;
+    }
+    
+    .product-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px var(--card-shadow);
+    }
+    
+    .wishlist-heart {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      font-size: 24px;
+      cursor: pointer;
+      z-index: 10;
+      transition: transform 0.2s;
+    }
+    
+    .wishlist-heart:hover {
+      transform: scale(1.2);
+    }
+    
+    .wishlist-heart.active {
+      color: #e74c3c;
+    }
+    
+    .cart-badge {
+      animation: bounce 0.3s ease;
+    }
+    
+    @keyframes bounce {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+    }
+    
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #10b981;
+      color: white;
+      padding: 16px 24px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      z-index: 1000;
+      animation: slideIn 0.3s ease;
+    }
+    
+    .toast.error {
+      background: #ef4444;
+    }
+    
+    @keyframes slideIn {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    
+    .category-btn {
+      transition: all 0.2s;
+    }
+    
+    .category-btn.active {
+      background: #ff9900;
+      color: white;
+    }
+    
+    .payment-method {
+      border: 2px solid #e5e5e5;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    
+    .payment-method:hover {
+      border-color: #ff9900;
+    }
+    
+    .payment-method.selected {
+      border-color: #ff9900;
+      background: #fff5e6;
+    }
+    
+    .upi-option {
+      border: 2px solid #e5e5e5;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    
+    .upi-option:hover {
+      border-color: #ff9900;
+    }
+    
+    .upi-option.selected {
+      border-color: #ff9900;
+      background: #fff5e6;
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full overflow-auto" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; margin: 0; background: #f5f5f5;">
+  <div class="w-full h-full" style="background: #f5f5f5;"><!-- Header -->
+   <header id="main-header" style="background: #232f3e; color: white; padding: 16px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: background 0.3s;">
+    <div style="max-width: 1400px; margin: 0 auto; padding: 0 20px;">
+     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <div>
+       <h1 id="site-name" style="margin: 0; font-size: 28px; font-weight: 700;">Shop Express</h1>
+       <p id="tagline" style="margin: 4px 0 0 0; font-size: 14px; opacity: 0.9;">Your one-stop shop for everything</p>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px;"><button id="dark-mode-toggle" style="background: transparent; color: white; border: 2px solid white; padding: 8px 16px; border-radius: 8px; font-size: 16px; cursor: pointer; display: flex; align-items: center; gap: 8px;"> <span id="theme-icon">🌙</span> <span id="theme-text">Dark</span> </button> <button id="wishlist-button" style="background: #e74c3c; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; position: relative;"> <span style="font-size: 20px;">❤️</span> <span>Wishlist</span> <span id="wishlist-count" class="cart-badge" style="background: #c0392b; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 12px; position: absolute; top: -8px; right: -8px;">0</span> </button> <button id="orders-button" style="background: #3498db; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;"> <span style="font-size: 20px;">📦</span> <span>Orders</span> </button> <button id="cart-button" style="background: #febd69; color: #232f3e; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; position: relative;"> <span style="font-size: 20px;">🛒</span> <span>Cart</span> <span id="cart-count" class="cart-badge" style="background: #ff4757; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 12px; position: absolute; top: -8px; right: -8px;">0</span> </button>
+      </div>
+     </div><!-- Search Bar -->
+     <div style="position: relative;"><input type="text" id="search-input" placeholder="Search for products..." style="width: 100%; padding: 12px 48px 12px 16px; border-radius: 8px; border: none; font-size: 16px; background: white; color: #232f3e;"> <span style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 20px;">🔍</span>
+     </div>
+    </div>
+   </header><!-- Main Content -->
+   <main id="main-content" style="max-width: 1400px; margin: 0 auto; padding: 32px 20px;"><!-- Products View -->
+    <div id="products-view"><!-- Categories -->
+     <div style="margin-bottom: 32px; overflow-x: auto; white-space: nowrap; padding-bottom: 8px;"><button class="category-btn active" data-category="all" style="background: #ff9900; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-right: 12px;">All Products</button> <button class="category-btn" data-category="electronics" style="background: white; color: #232f3e; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-right: 12px;">Electronics</button> <button class="category-btn" data-category="fashion" style="background: white; color: #232f3e; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-right: 12px;">Fashion</button> <button class="category-btn" data-category="home" style="background: white; color: #232f3e; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-right: 12px;">Home &amp; Kitchen</button> <button class="category-btn" data-category="sports" style="background: white; color: #232f3e; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-right: 12px;">Sports</button> <button class="category-btn" data-category="books" style="background: white; color: #232f3e; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-right: 12px;">Books</button> <button class="category-btn" data-category="beauty" style="background: white; color: #232f3e; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">Beauty</button>
+     </div>
+     <h2 id="section-title" style="font-size: 32px; font-weight: 700; margin: 0 0 24px 0; color: #232f3e;">Featured Products</h2>
+     <div id="products-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px;"><!-- Products will be inserted here -->
+     </div>
+    </div><!-- Cart View -->
+    <div id="cart-view" style="display: none;">
+     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+      <h2 id="cart-title" style="font-size: 32px; font-weight: 700; margin: 0; color: #232f3e;">Shopping Cart</h2><button id="back-button" style="background: #e5e5e5; color: #232f3e; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">← Continue Shopping</button>
+     </div>
+     <div id="cart-items" style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 24px;"><!-- Cart items will be inserted here -->
+     </div>
+     <div style="background: var(--bg-secondary); border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px var(--card-shadow);"><!-- Coupon Code Section -->
+      <div style="margin-bottom: 24px; padding-bottom: 24px; border-bottom: 2px solid var(--border-color);">
+       <h3 style="font-size: 18px; font-weight: 600; margin: 0 0 12px 0; color: var(--text-primary);">Have a Coupon Code? 💸</h3>
+       <div style="display: flex; gap: 12px;"><input type="text" id="coupon-input" placeholder="Enter coupon code" style="flex: 1; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; font-size: 16px; background: var(--bg-primary); color: var(--text-primary);"> <button id="apply-coupon-btn" style="background: #27ae60; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; white-space: nowrap;">Apply</button>
+       </div>
+       <div id="coupon-message" style="margin-top: 8px; font-size: 14px; min-height: 20px;"></div>
+       <div style="margin-top: 12px; font-size: 13px; color: var(--text-secondary);">
+        Try: <span style="background: var(--bg-primary); padding: 4px 8px; border-radius: 4px; margin: 0 4px; font-weight: 600; cursor: pointer;" onclick="document.getElementById('coupon-input').value='SAVE10'">SAVE10</span> or <span style="background: var(--bg-primary); padding: 4px 8px; border-radius: 4px; margin: 0 4px; font-weight: 600; cursor: pointer;" onclick="document.getElementById('coupon-input').value='SAVE20'">SAVE20</span>
+       </div>
+      </div><!-- Cart Summary -->
+      <div style="text-align: right;">
+       <div style="margin-bottom: 8px;"><span style="color: var(--text-secondary);">Subtotal: </span> <span style="font-size: 18px; font-weight: 600; color: var(--text-primary);">₹<span id="cart-subtotal">0.00</span></span>
+       </div>
+       <div id="discount-row" style="display: none; margin-bottom: 8px; color: #27ae60;"><span>Discount (<span id="discount-percent">0</span>%): </span> <span style="font-size: 18px; font-weight: 600;">-₹<span id="discount-amount">0.00</span></span>
+       </div>
+       <div style="font-size: 24px; font-weight: 700; color: var(--text-primary); margin-bottom: 16px; padding-top: 12px; border-top: 2px solid var(--border-color);">
+        Total: ₹<span id="cart-total">0.00</span>
+       </div><button id="checkout-button" style="background: #ff9900; color: white; border: none; padding: 16px 48px; border-radius: 8px; font-size: 18px; font-weight: 600; cursor: pointer;">Proceed to Checkout</button>
+      </div>
+     </div>
+    </div><!-- Wishlist View -->
+    <div id="wishlist-view" style="display: none;">
+     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+      <h2 style="font-size: 32px; font-weight: 700; margin: 0; color: var(--text-primary);">My Wishlist ❤️</h2><button id="back-from-wishlist" style="background: var(--bg-secondary); color: var(--text-primary); border: 2px solid var(--border-color); padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">← Back to Shopping</button>
+     </div>
+     <div id="wishlist-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px;"><!-- Wishlist items will be inserted here -->
+     </div>
+    </div><!-- Orders View -->
+    <div id="orders-view" style="display: none;">
+     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+      <h2 style="font-size: 32px; font-weight: 700; margin: 0; color: var(--text-primary);">Order History 📦</h2><button id="back-from-orders" style="background: var(--bg-secondary); color: var(--text-primary); border: 2px solid var(--border-color); padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">← Back to Shopping</button>
+     </div>
+     <div id="orders-list"><!-- Orders will be inserted here -->
+     </div>
+    </div><!-- Recently Viewed Section (shown on products page) -->
+    <div id="recently-viewed-section" style="display: none; margin-top: 48px;">
+     <h2 style="font-size: 28px; font-weight: 700; margin: 0 0 24px 0; color: var(--text-primary);">Recently Viewed 👀</h2>
+     <div id="recently-viewed-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px;"><!-- Recently viewed products will be inserted here -->
+     </div>
+    </div><!-- Payment View -->
+    <div id="payment-view" style="display: none;">
+     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+      <h2 id="payment-title" style="font-size: 32px; font-weight: 700; margin: 0; color: #232f3e;">Payment Details</h2><button id="back-to-cart-button" style="background: #e5e5e5; color: #232f3e; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">← Back to Cart</button>
+     </div>
+     <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;"><!-- Payment Methods -->
+      <div>
+       <div style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 24px;">
+        <h3 style="font-size: 20px; font-weight: 700; margin: 0 0 20px 0; color: #232f3e;">Select Payment Method</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+         <div class="payment-method" data-method="card" style="padding: 20px; border-radius: 8px; text-align: center;">
+          <div style="font-size: 48px; margin-bottom: 8px;">
+           💳
+          </div>
+          <div style="font-weight: 600; color: #232f3e;">
+           Credit/Debit Card
+          </div>
+         </div>
+         <div class="payment-method" data-method="upi" style="padding: 20px; border-radius: 8px; text-align: center;">
+          <div style="font-size: 48px; margin-bottom: 8px;">
+           📱
+          </div>
+          <div style="font-weight: 600; color: #232f3e;">
+           UPI
+          </div>
+         </div>
+        </div><!-- Card Payment Form -->
+        <div id="card-form" style="display: none;">
+         <h4 style="font-size: 18px; font-weight: 600; margin: 0 0 16px 0; color: #232f3e;">Enter Card Details</h4>
+         <form id="card-payment-form">
+          <div style="margin-bottom: 16px;"><label for="card-number" style="display: block; margin-bottom: 8px; font-weight: 600; color: #232f3e;">Card Number</label> <input type="text" id="card-number" maxlength="19" placeholder="1234 5678 9012 3456" required style="width: 100%; padding: 12px; border: 2px solid #e5e5e5; border-radius: 8px; font-size: 16px;">
+          </div>
+          <div style="margin-bottom: 16px;"><label for="card-name" style="display: block; margin-bottom: 8px; font-weight: 600; color: #232f3e;">Cardholder Name</label> <input type="text" id="card-name" placeholder="John Doe" required style="width: 100%; padding: 12px; border: 2px solid #e5e5e5; border-radius: 8px; font-size: 16px;">
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+           <div><label for="card-expiry" style="display: block; margin-bottom: 8px; font-weight: 600; color: #232f3e;">Expiry Date</label> <input type="text" id="card-expiry" maxlength="5" placeholder="MM/YY" required style="width: 100%; padding: 12px; border: 2px solid #e5e5e5; border-radius: 8px; font-size: 16px;">
+           </div>
+           <div><label for="card-cvv" style="display: block; margin-bottom: 8px; font-weight: 600; color: #232f3e;">CVV</label> <input type="text" id="card-cvv" maxlength="3" placeholder="123" required style="width: 100%; padding: 12px; border: 2px solid #e5e5e5; border-radius: 8px; font-size: 16px;">
+           </div>
+          </div><button type="submit" style="width: 100%; background: #ff9900; color: white; border: none; padding: 16px; border-radius: 8px; font-size: 18px; font-weight: 600; cursor: pointer;">Pay ₹<span id="card-amount">0.00</span></button>
+         </form>
+        </div><!-- UPI Payment Form -->
+        <div id="upi-form" style="display: none;">
+         <h4 style="font-size: 18px; font-weight: 600; margin: 0 0 16px 0; color: #232f3e;">Choose UPI Option</h4>
+         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px;">
+          <div class="upi-option" data-upi="gpay" style="padding: 16px; border-radius: 8px; text-align: center;">
+           <div style="font-size: 36px; margin-bottom: 4px;">
+            📱
+           </div>
+           <div style="font-weight: 600; font-size: 14px; color: #232f3e;">
+            Google Pay
+           </div>
+          </div>
+          <div class="upi-option" data-upi="phonepe" style="padding: 16px; border-radius: 8px; text-align: center;">
+           <div style="font-size: 36px; margin-bottom: 4px;">
+            💜
+           </div>
+           <div style="font-weight: 600; font-size: 14px; color: #232f3e;">
+            PhonePe
+           </div>
+          </div>
+          <div class="upi-option" data-upi="paytm" style="padding: 16px; border-radius: 8px; text-align: center;">
+           <div style="font-size: 36px; margin-bottom: 4px;">
+            💙
+           </div>
+           <div style="font-weight: 600; font-size: 14px; color: #232f3e;">
+            Paytm
+           </div>
+          </div>
+          <div class="upi-option" data-upi="bhim" style="padding: 16px; border-radius: 8px; text-align: center;">
+           <div style="font-size: 36px; margin-bottom: 4px;">
+            🇮🇳
+           </div>
+           <div style="font-weight: 600; font-size: 14px; color: #232f3e;">
+            BHIM
+           </div>
+          </div>
+          <div class="upi-option" data-upi="amazonpay" style="padding: 16px; border-radius: 8px; text-align: center;">
+           <div style="font-size: 36px; margin-bottom: 4px;">
+            🟠
+           </div>
+           <div style="font-weight: 600; font-size: 14px; color: #232f3e;">
+            Amazon Pay
+           </div>
+          </div>
+          <div class="upi-option" data-upi="other" style="padding: 16px; border-radius: 8px; text-align: center;">
+           <div style="font-size: 36px; margin-bottom: 4px;">
+            💰
+           </div>
+           <div style="font-weight: 600; font-size: 14px; color: #232f3e;">
+            Other UPI
+           </div>
+          </div>
+         </div>
+         <form id="upi-payment-form">
+          <div style="margin-bottom: 24px;"><label for="upi-id" style="display: block; margin-bottom: 8px; font-weight: 600; color: #232f3e;">Enter UPI ID</label> <input type="text" id="upi-id" placeholder="yourname@upi" required style="width: 100%; padding: 12px; border: 2px solid #e5e5e5; border-radius: 8px; font-size: 16px;">
+           <div id="selected-upi-app" style="margin-top: 8px; color: #666; font-size: 14px;"></div>
+          </div><button type="submit" style="width: 100%; background: #ff9900; color: white; border: none; padding: 16px; border-radius: 8px; font-size: 18px; font-weight: 600; cursor: pointer;">Pay ₹<span id="upi-amount">0.00</span></button>
+         </form>
+        </div>
+       </div>
+      </div><!-- Order Summary -->
+      <div>
+       <div style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <h3 style="font-size: 20px; font-weight: 700; margin: 0 0 20px 0; color: #232f3e; border-bottom: 2px solid #e5e5e5; padding-bottom: 12px;">Order Summary</h3>
+        <div id="payment-items" style="margin-bottom: 20px;"><!-- Order items will be inserted here -->
+        </div>
+        <div style="border-top: 2px solid #e5e5e5; padding-top: 16px; margin-top: 16px;">
+         <div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span style="color: #666;">Subtotal:</span> <span style="font-weight: 600;">₹<span id="payment-subtotal">0.00</span></span>
+         </div>
+         <div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span style="color: #666;">Delivery:</span> <span style="font-weight: 600; color: #10b981;">FREE</span>
+         </div>
+         <div style="display: flex; justify-content: space-between; font-size: 20px; font-weight: 700; margin-top: 16px; color: #232f3e;"><span>Total:</span> <span>₹<span id="payment-total">0.00</span></span>
+         </div>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div>
+   </main>
+  </div><!-- Success Modal -->
+  <div id="success-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
+   <div style="background: white; border-radius: 16px; padding: 48px; text-align: center; max-width: 400px; margin: 20px;">
+    <div style="font-size: 80px; margin-bottom: 16px;">
+     ✅
+    </div>
+    <h2 style="font-size: 28px; font-weight: 700; margin: 0 0 12px 0; color: #10b981;">Payment Successful!</h2>
+    <p style="font-size: 16px; color: #666; margin: 0 0 24px 0;">Your order has been placed successfully.</p><button id="close-modal" style="background: #ff9900; color: white; border: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">Continue Shopping</button>
+   </div>
+  </div>
+  <script>
+  const defaultConfig = {
+    site_name: "Shop Express",
+    tagline: "Your one-stop shop for everything",
+    section_title: "Featured Products",
+    cart_title: "Shopping Cart",
+    checkout_button_text: "Proceed to Checkout",
+    payment_title: "Payment Details",
+    all_category: "All Products",
+    primary_color: "#232f3e",
+    accent_color: "#ff9900",
+    button_color: "#febd69",
+    background_color: "#f5f5f5",
+    card_color: "#ffffff"
+  };
+
+  // Expanded product data with categories (prices in INR)
+  const products = [
+    // Electronics
+    { id: 1, name: "Wireless Headphones", price: 2499, image: "🎧", description: "Premium sound quality with noise cancellation", category: "electronics" },
+    { id: 2, name: "Smart Watch", price: 8999, image: "⌚", description: "Track your fitness and stay connected", category: "electronics" },
+    { id: 3, name: "Bluetooth Speaker", price: 1999, image: "🔊", description: "Portable speaker with 360° sound", category: "electronics" },
+    { id: 4, name: "Phone Case", price: 499, image: "📱", description: "Protective case with premium grip", category: "electronics" },
+    { id: 5, name: "Wireless Mouse", price: 799, image: "🖱️", description: "Ergonomic design with silent clicks", category: "electronics" },
+    { id: 6, name: "USB Cable", price: 299, image: "🔌", description: "Fast charging and data transfer", category: "electronics" },
+    
+    // Fashion
+    { id: 7, name: "Cotton T-Shirt", price: 599, image: "👕", description: "Comfortable and breathable fabric", category: "fashion" },
+    { id: 8, name: "Running Shoes", price: 2999, image: "👟", description: "Lightweight and durable sports shoes", category: "fashion" },
+    { id: 9, name: "Sunglasses", price: 899, image: "🕶️", description: "UV protection with stylish design", category: "fashion" },
+    { id: 10, name: "Leather Wallet", price: 1299, image: "👛", description: "Genuine leather with RFID protection", category: "fashion" },
+    { id: 11, name: "Wrist Watch", price: 3499, image: "⌚", description: "Elegant analog watch", category: "fashion" },
+    { id: 12, name: "Cap", price: 399, image: "🧢", description: "Adjustable sports cap", category: "fashion" },
+    
+    // Home & Kitchen
+    { id: 13, name: "Coffee Maker", price: 3999, image: "☕", description: "Brew the perfect cup every time", category: "home" },
+    { id: 14, name: "LED Desk Lamp", price: 1299, image: "💡", description: "Adjustable brightness and color temperature", category: "home" },
+    { id: 15, name: "Blender", price: 2499, image: "🥤", description: "Powerful motor for smooth blending", category: "home" },
+    { id: 16, name: "Dinner Set", price: 1999, image: "🍽️", description: "24-piece ceramic dinner set", category: "home" },
+    { id: 17, name: "Bed Sheet Set", price: 1499, image: "🛏️", description: "Soft cotton with vibrant colors", category: "home" },
+    { id: 18, name: "Wall Clock", price: 799, image: "🕐", description: "Modern design with silent movement", category: "home" },
+    
+    // Sports
+    { id: 19, name: "Yoga Mat", price: 899, image: "🧘", description: "Non-slip surface for better grip", category: "sports" },
+    { id: 20, name: "Dumbbell Set", price: 2499, image: "🏋️", description: "Adjustable weight dumbbells", category: "sports" },
+    { id: 21, name: "Cricket Bat", price: 1799, image: "🏏", description: "Professional grade willow bat", category: "sports" },
+    { id: 22, name: "Football", price: 899, image: "⚽", description: "Standard size with durable material", category: "sports" },
+    { id: 23, name: "Badminton Racket", price: 1299, image: "🏸", description: "Lightweight carbon fiber racket", category: "sports" },
+    { id: 24, name: "Water Bottle", price: 399, image: "💧", description: "Insulated steel bottle 1L", category: "sports" },
+    
+    // Books
+    { id: 25, name: "Self-Help Book", price: 399, image: "📚", description: "Transform your life with wisdom", category: "books" },
+    { id: 26, name: "Mystery Novel", price: 299, image: "📖", description: "Bestselling thriller novel", category: "books" },
+    { id: 27, name: "Cookbook", price: 499, image: "🍳", description: "500+ delicious recipes", category: "books" },
+    { id: 28, name: "Business Book", price: 599, image: "💼", description: "Essential guide for entrepreneurs", category: "books" },
+    { id: 29, name: "Children's Book", price: 249, image: "📕", description: "Illustrated stories for kids", category: "books" },
+    { id: 30, name: "Notebook Set", price: 199, image: "📓", description: "Pack of 3 ruled notebooks", category: "books" },
+    
+    // Beauty
+    { id: 31, name: "Face Cream", price: 799, image: "🧴", description: "Moisturizing cream for all skin types", category: "beauty" },
+    { id: 32, name: "Lipstick Set", price: 699, image: "💄", description: "6 vibrant colors in one pack", category: "beauty" },
+    { id: 33, name: "Perfume", price: 1499, image: "🌸", description: "Long-lasting fragrance 50ml", category: "beauty" },
+    { id: 34, name: "Hair Dryer", price: 1899, image: "💨", description: "Professional salon-grade dryer", category: "beauty" },
+    { id: 35, name: "Nail Polish Set", price: 499, image: "  ", description: "Set of 10 trendy colors", category: "beauty" },
+    { id: 36, name: "Face Mask Pack", price: 399, image: "😊", description: "Natural ingredients for glowing skin", category: "beauty" }
+  ];
+
+  let cart = [];
+  let wishlist = [];
+  let recentlyViewed = [];
+  let orders = [];
+  let currentCategory = 'all';
+  let searchQuery = '';
+  let selectedPaymentMethod = null;
+  let selectedUpiApp = null;
+  let appliedCoupon = null;
+  let discountPercent = 0;
+
+  // Load all data from localStorage
+  function loadCart() {
+    const saved = localStorage.getItem('shopping-cart');
+    if (saved) {
+      cart = JSON.parse(saved);
+    }
+    updateCartCount();
+  }
+
+  function loadWishlist() {
+    const saved = localStorage.getItem('wishlist');
+    if (saved) {
+      wishlist = JSON.parse(saved);
+    }
+    updateWishlistCount();
+  }
+
+  function loadRecentlyViewed() {
+    const saved = localStorage.getItem('recently-viewed');
+    if (saved) {
+      recentlyViewed = JSON.parse(saved);
+    }
+  }
+
+  function loadOrders() {
+    const saved = localStorage.getItem('orders');
+    if (saved) {
+      orders = JSON.parse(saved);
+    }
+  }
+
+  function loadTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      document.getElementById('theme-icon').textContent = '☀️';
+      document.getElementById('theme-text').textContent = 'Light';
+    }
+  }
+
+  function saveCart() {
+    localStorage.setItem('shopping-cart', JSON.stringify(cart));
+  }
+
+  function saveWishlist() {
+    localStorage.setItem('wishlist', JSON.stringify(wishlist));
+  }
+
+  function saveRecentlyViewed() {
+    localStorage.setItem('recently-viewed', JSON.stringify(recentlyViewed));
+  }
+
+  function saveOrders() {
+    localStorage.setItem('orders', JSON.stringify(orders));
+  }
+
+  function updateCartCount() {
+    const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+    const badge = document.getElementById('cart-count');
+    badge.textContent = count;
+    badge.classList.add('cart-badge');
+    setTimeout(() => badge.classList.remove('cart-badge'), 300);
+  }
+
+  function updateWishlistCount() {
+    const badge = document.getElementById('wishlist-count');
+    badge.textContent = wishlist.length;
+    badge.classList.add('cart-badge');
+    setTimeout(() => badge.classList.remove('cart-badge'), 300);
+  }
+
+  // Wishlist functions
+  function toggleWishlist(product) {
+    const index = wishlist.findIndex(item => item.id === product.id);
+    if (index > -1) {
+      wishlist.splice(index, 1);
+      showToast('Removed from wishlist');
+    } else {
+      wishlist.push(product);
+      showToast('Added to wishlist! ❤️');
+    }
+    saveWishlist();
+    updateWishlistCount();
+    renderProducts();
+    if (document.getElementById('wishlist-view').style.display === 'block') {
+      renderWishlist();
+    }
+  }
+
+  function isInWishlist(productId) {
+    return wishlist.some(item => item.id === productId);
+  }
+
+  // Recently viewed functions
+  function addToRecentlyViewed(product) {
+    // Remove if already exists
+    recentlyViewed = recentlyViewed.filter(item => item.id !== product.id);
+    // Add to beginning
+    recentlyViewed.unshift(product);
+    // Keep only last 5
+    recentlyViewed = recentlyViewed.slice(0, 5);
+    saveRecentlyViewed();
+  }
+
+  function showToast(message, isError = false) {
+    const toast = document.createElement('div');
+    toast.className = 'toast' + (isError ? ' error' : '');
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2000);
+  }
+
+  function addToCart(product) {
+    const existing = cart.find(item => item.id === product.id);
+    if (existing) {
+      existing.quantity++;
+    } else {
+      cart.push({ ...product, quantity: 1 });
+    }
+    saveCart();
+    updateCartCount();
+    showToast('Added to cart!');
+  }
+
+  function removeFromCart(productId) {
+    cart = cart.filter(item => item.id !== productId);
+    saveCart();
+    updateCartCount();
+    renderCart();
+  }
+
+  function updateQuantity(productId, change) {
+    const item = cart.find(item => item.id === productId);
+    if (item) {
+      item.quantity += change;
+      if (item.quantity <= 0) {
+        removeFromCart(productId);
+      } else {
+        saveCart();
+        renderCart();
+      }
+    }
+  }
+
+  function filterProducts() {
+    return products.filter(product => {
+      const matchesCategory = currentCategory === 'all' || product.category === currentCategory;
+      const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          product.description.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesCategory && matchesSearch;
+    });
+  }
+
+  function renderProducts() {
+    const grid = document.getElementById('products-grid');
+    const filteredProducts = filterProducts();
+    
+    if (filteredProducts.length === 0) {
+      grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 60px; color: var(--text-secondary); font-size: 18px;">No products found</div>';
+      return;
+    }
+
+    grid.innerHTML = filteredProducts.map(product => {
+      const inWishlist = isInWishlist(product.id);
+      return `
+      <div class="product-card" style="border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px var(--card-shadow); position: relative; cursor: pointer;" onclick="viewProduct(${product.id})">
+        <span class="wishlist-heart ${inWishlist ? 'active' : ''}" onclick="event.stopPropagation(); toggleWishlist(${JSON.stringify(product).replace(/"/g, '&quot;')})">${inWishlist ? '❤️' : '🤍'}</span>
+        <div style="font-size: 80px; text-align: center; margin-bottom: 16px;">${product.image}</div>
+        <h3 style="font-size: 18px; font-weight: 600; margin: 0 0 8px 0; color: var(--text-primary);">${product.name}</h3>
+        <p style="font-size: 14px; color: var(--text-secondary); margin: 0 0 12px 0; line-height: 1.4;">${product.description}</p>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px;">
+          <span style="font-size: 24px; font-weight: 700; color: ${defaultConfig.accent_color};">₹${product.price.toFixed(2)}</span>
+          <button onclick="event.stopPropagation(); addToCart(${JSON.stringify(product).replace(/"/g, '&quot;')})" style="background: ${defaultConfig.accent_color}; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer;">Add to Cart</button>
+        </div>
+      </div>
+    `}).join('');
+    
+    // Show recently viewed if available
+    if (recentlyViewed.length > 0 && document.getElementById('products-view').style.display !== 'none') {
+      renderRecentlyViewed();
+    }
+  }
+
+  function viewProduct(productId) {
+    const product = products.find(p => p.id === productId);
+    if (product) {
+      addToRecentlyViewed(product);
+      renderRecentlyViewed();
+    }
+  }
+
+  function renderWishlist() {
+    const grid = document.getElementById('wishlist-grid');
+    
+    if (wishlist.length === 0) {
+      grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 60px; color: var(--text-secondary); font-size: 18px;">Your wishlist is empty ❤️</div>';
+      return;
+    }
+
+    grid.innerHTML = wishlist.map(product => {
+      return `
+      <div class="product-card" style="border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px var(--card-shadow); position: relative;">
+        <span class="wishlist-heart active" onclick="toggleWishlist(${JSON.stringify(product).replace(/"/g, '&quot;')})">❤️</span>
+        <div style="font-size: 80px; text-align: center; margin-bottom: 16px;">${product.image}</div>
+        <h3 style="font-size: 18px; font-weight: 600; margin: 0 0 8px 0; color: var(--text-primary);">${product.name}</h3>
+        <p style="font-size: 14px; color: var(--text-secondary); margin: 0 0 12px 0; line-height: 1.4;">${product.description}</p>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px;">
+          <span style="font-size: 24px; font-weight: 700; color: ${defaultConfig.accent_color};">₹${product.price.toFixed(2)}</span>
+          <button onclick="addToCart(${JSON.stringify(product).replace(/"/g, '&quot;')})" style="background: ${defaultConfig.accent_color}; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer;">Add to Cart</button>
+        </div>
+      </div>
+    `}).join('');
+  }
+
+  function renderRecentlyViewed() {
+    const section = document.getElementById('recently-viewed-section');
+    const grid = document.getElementById('recently-viewed-grid');
+    
+    if (recentlyViewed.length === 0) {
+      section.style.display = 'none';
+      return;
+    }
+
+    section.style.display = 'block';
+    grid.innerHTML = recentlyViewed.map(product => {
+      const inWishlist = isInWishlist(product.id);
+      return `
+      <div class="product-card" style="border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px var(--card-shadow); position: relative;">
+        <span class="wishlist-heart ${inWishlist ? 'active' : ''}" onclick="toggleWishlist(${JSON.stringify(product).replace(/"/g, '&quot;')})">${inWishlist ? '❤️' : '🤍'}</span>
+        <div style="font-size: 80px; text-align: center; margin-bottom: 16px;">${product.image}</div>
+        <h3 style="font-size: 18px; font-weight: 600; margin: 0 0 8px 0; color: var(--text-primary);">${product.name}</h3>
+        <p style="font-size: 14px; color: var(--text-secondary); margin: 0 0 12px 0; line-height: 1.4;">${product.description}</p>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px;">
+          <span style="font-size: 24px; font-weight: 700; color: ${defaultConfig.accent_color};">₹${product.price.toFixed(2)}</span>
+          <button onclick="addToCart(${JSON.stringify(product).replace(/"/g, '&quot;')})" style="background: ${defaultConfig.accent_color}; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer;">Add to Cart</button>
+        </div>
+      </div>
+    `}).join('');
+  }
+
+  function renderCart() {
+    const container = document.getElementById('cart-items');
+    
+    if (cart.length === 0) {
+      container.innerHTML = '<p style="text-align: center; color: #666; font-size: 18px; padding: 40px;">Your cart is empty</p>';
+      document.getElementById('cart-total').textContent = '0.00';
+      return;
+    }
+
+    container.innerHTML = cart.map(item => `
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 20px 0; border-bottom: 1px solid var(--border-color);">
+        <div style="display: flex; align-items: center; gap: 20px; flex: 1;">
+          <div style="font-size: 48px;">${item.image}</div>
+          <div style="flex: 1;">
+            <h3 style="font-size: 18px; font-weight: 600; margin: 0 0 4px 0; color: var(--text-primary);">${item.name}</h3>
+            <p style="font-size: 14px; color: var(--text-secondary); margin: 0;">${item.description}</p>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 24px;">
+          <div style="display: flex; align-items: center; gap: 12px; background: var(--bg-primary); border-radius: 8px; padding: 8px;">
+            <button onclick="updateQuantity(${item.id}, -1)" style="background: var(--bg-secondary); border: 1px solid var(--border-color); width: 32px; height: 32px; border-radius: 6px; cursor: pointer; font-size: 18px; font-weight: 600; display: flex; align-items: center; justify-content: center; color: var(--text-primary);">−</button>
+            <span style="font-size: 16px; font-weight: 600; min-width: 32px; text-align: center; color: var(--text-primary);">${item.quantity}</span>
+            <button onclick="updateQuantity(${item.id}, 1)" style="background: var(--bg-secondary); border: 1px solid var(--border-color); width: 32px; height: 32px; border-radius: 6px; cursor: pointer; font-size: 18px; font-weight: 600; display: flex; align-items: center; justify-content: center; color: var(--text-primary);">+</button>
+          </div>
+          <span style="font-size: 20px; font-weight: 700; color: ${defaultConfig.accent_color}; min-width: 100px; text-align: right;">₹${(item.price * item.quantity).toFixed(2)}</span>
+          <button onclick="removeFromCart(${item.id})" style="background: #ff4757; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600;">Remove</button>
+        </div>
+      </div>
+    `).join('');
+
+    calculateCartTotal();
+  }
+
+  function calculateCartTotal() {
+    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const discount = (subtotal * discountPercent) / 100;
+    const total = subtotal - discount;
+
+    document.getElementById('cart-subtotal').textContent = subtotal.toFixed(2);
+    document.getElementById('cart-total').textContent = total.toFixed(2);
+
+    if (discountPercent > 0) {
+      document.getElementById('discount-row').style.display = 'block';
+      document.getElementById('discount-percent').textContent = discountPercent;
+      document.getElementById('discount-amount').textContent = discount.toFixed(2);
+    } else {
+      document.getElementById('discount-row').style.display = 'none';
+    }
+  }
+
+  function renderOrders() {
+    const container = document.getElementById('orders-list');
+    
+    if (orders.length === 0) {
+      container.innerHTML = '<div style="text-align: center; padding: 60px; color: var(--text-secondary); font-size: 18px;">No orders yet 📦</div>';
+      return;
+    }
+
+    // Sort orders by date (most recent first)
+    const sortedOrders = [...orders].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    container.innerHTML = sortedOrders.map(order => `
+      <div style="background: var(--bg-secondary); border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px var(--card-shadow); margin-bottom: 20px; border-left: 4px solid ${defaultConfig.accent_color};">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
+          <div>
+            <h3 style="font-size: 20px; font-weight: 700; margin: 0 0 8px 0; color: var(--text-primary);">Order #${order.id}</h3>
+            <p style="font-size: 14px; color: var(--text-secondary); margin: 0;">Placed on ${new Date(order.date).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 24px; font-weight: 700; color: ${defaultConfig.accent_color};">₹${order.total.toFixed(2)}</div>
+            <div style="font-size: 12px; color: #27ae60; font-weight: 600; background: #d4edda; padding: 4px 12px; border-radius: 4px; margin-top: 4px;">✓ Completed</div>
+          </div>
+        </div>
+        
+        <div style="border-top: 1px solid var(--border-color); padding-top: 16px;">
+          <h4 style="font-size: 14px; font-weight: 600; margin: 0 0 12px 0; color: var(--text-secondary);">Items (${order.items.length})</h4>
+          ${order.items.map(item => `
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding: 8px; background: var(--bg-primary); border-radius: 8px;">
+              <div style="font-size: 32px;">${item.image}</div>
+              <div style="flex: 1;">
+                <div style="font-weight: 600; font-size: 14px; color: var(--text-primary);">${item.name}</div>
+                <div style="font-size: 12px; color: var(--text-secondary);">Qty: ${item.quantity} × ₹${item.price.toFixed(2)}</div>
+              </div>
+              <div style="font-weight: 600; color: ${defaultConfig.accent_color};">₹${(item.price * item.quantity).toFixed(2)}</div>
+            </div>
+          `).join('')}
+        </div>
+        
+        ${order.discount > 0 ? `
+          <div style="margin-top: 12px; padding: 8px; background: #d4edda; border-radius: 8px; font-size: 14px; color: #155724;">
+            💸 Saved ₹${order.discount.toFixed(2)} with coupon code: <strong>${order.couponCode}</strong>
+          </div>
+        ` : ''}
+      </div>
+    `).join('');
+  }
+
+  function renderPaymentSummary() {
+    const container = document.getElementById('payment-items');
+    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const discount = (subtotal * discountPercent) / 100;
+    const total = subtotal - discount;
+    
+    container.innerHTML = cart.map(item => `
+      <div style="display: flex; justify-content: space-between; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #f0f0f0;">
+        <div>
+          <div style="font-weight: 600; font-size: 14px; color: #232f3e;">${item.name}</div>
+          <div style="font-size: 12px; color: #666;">Qty: ${item.quantity}</div>
+        </div>
+        <div style="font-weight: 600; color: ${defaultConfig.accent_color};">₹${(item.price * item.quantity).toFixed(2)}</div>
+      </div>
+    `).join('');
+
+    document.getElementById('payment-subtotal').textContent = total.toFixed(2);
+    document.getElementById('payment-total').textContent = total.toFixed(2);
+    document.getElementById('card-amount').textContent = total.toFixed(2);
+    document.getElementById('upi-amount').textContent = total.toFixed(2);
+  }
+
+  function showProducts() {
+    document.getElementById('products-view').style.display = 'block';
+    document.getElementById('cart-view').style.display = 'none';
+    document.getElementById('payment-view').style.display = 'none';
+    document.getElementById('wishlist-view').style.display = 'none';
+    document.getElementById('orders-view').style.display = 'none';
+    document.getElementById('recently-viewed-section').style.display = recentlyViewed.length > 0 ? 'block' : 'none';
+  }
+
+  function showCart() {
+    document.getElementById('products-view').style.display = 'none';
+    document.getElementById('cart-view').style.display = 'block';
+    document.getElementById('payment-view').style.display = 'none';
+    document.getElementById('wishlist-view').style.display = 'none';
+    document.getElementById('orders-view').style.display = 'none';
+    renderCart();
+  }
+
+  function showWishlist() {
+    document.getElementById('products-view').style.display = 'none';
+    document.getElementById('cart-view').style.display = 'none';
+    document.getElementById('payment-view').style.display = 'none';
+    document.getElementById('wishlist-view').style.display = 'block';
+    document.getElementById('orders-view').style.display = 'none';
+    renderWishlist();
+  }
+
+  function showOrders() {
+    document.getElementById('products-view').style.display = 'none';
+    document.getElementById('cart-view').style.display = 'none';
+    document.getElementById('payment-view').style.display = 'none';
+    document.getElementById('wishlist-view').style.display = 'none';
+    document.getElementById('orders-view').style.display = 'block';
+    renderOrders();
+  }
+
+  function showPayment() {
+    if (cart.length === 0) {
+      showToast('Your cart is empty!', true);
+      return;
+    }
+    document.getElementById('products-view').style.display = 'none';
+    document.getElementById('cart-view').style.display = 'none';
+    document.getElementById('payment-view').style.display = 'block';
+    document.getElementById('wishlist-view').style.display = 'none';
+    document.getElementById('orders-view').style.display = 'none';
+    renderPaymentSummary();
+  }
+
+  function formatCardNumber(value) {
+    return value.replace(/\s/g, '').replace(/(\d{4})/g, '$1 ').trim();
+  }
+
+  function formatExpiry(value) {
+    return value.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1/$2').substring(0, 5);
+  }
+
+  async function onConfigChange(config) {
+    document.getElementById('site-name').textContent = config.site_name || defaultConfig.site_name;
+    document.getElementById('tagline').textContent = config.tagline || defaultConfig.tagline;
+    document.getElementById('section-title').textContent = config.section_title || defaultConfig.section_title;
+    document.getElementById('cart-title').textContent = config.cart_title || defaultConfig.cart_title;
+    document.getElementById('checkout-button').textContent = config.checkout_button_text || defaultConfig.checkout_button_text;
+    document.getElementById('payment-title').textContent = config.payment_title || defaultConfig.payment_title;
+    
+    const categoryButtons = document.querySelectorAll('.category-btn');
+    if (categoryButtons[0]) {
+      categoryButtons[0].textContent = config.all_category || defaultConfig.all_category;
+    }
+    
+    document.querySelector('header').style.background = config.primary_color || defaultConfig.primary_color;
+    document.getElementById('main-content').parentElement.style.background = config.background_color || defaultConfig.background_color;
+    
+    renderProducts();
+    if (document.getElementById('cart-view').style.display === 'block') {
+      renderCart();
+    }
+  }
+
+  // Event listeners
+  document.getElementById('cart-button').addEventListener('click', showCart);
+  document.getElementById('wishlist-button').addEventListener('click', showWishlist);
+  document.getElementById('orders-button').addEventListener('click', showOrders);
+  document.getElementById('back-button').addEventListener('click', showProducts);
+  document.getElementById('back-from-wishlist').addEventListener('click', showProducts);
+  document.getElementById('back-from-orders').addEventListener('click', showProducts);
+  document.getElementById('checkout-button').addEventListener('click', showPayment);
+  document.getElementById('back-to-cart-button').addEventListener('click', showCart);
+
+  // Dark mode toggle
+  document.getElementById('dark-mode-toggle').addEventListener('click', function() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+    
+    if (newTheme === 'dark') {
+      document.getElementById('theme-icon').textContent = '☀️';
+      document.getElementById('theme-text').textContent = 'Light';
+    } else {
+      document.getElementById('theme-icon').textContent = '🌙';
+      document.getElementById('theme-text').textContent = 'Dark';
+    }
+  });
+
+  // Coupon code application
+  document.getElementById('apply-coupon-btn').addEventListener('click', function() {
+    const couponCode = document.getElementById('coupon-input').value.trim().toUpperCase();
+    const messageDiv = document.getElementById('coupon-message');
+    
+    const coupons = {
+      'SAVE10': 10,
+      'SAVE20': 20
+    };
+    
+    if (coupons[couponCode]) {
+      appliedCoupon = couponCode;
+      discountPercent = coupons[couponCode];
+      messageDiv.innerHTML = `<span style="color: #27ae60; font-weight: 600;">✓ Coupon applied! ${discountPercent}% discount</span>`;
+      calculateCartTotal();
+      showToast(`Coupon applied! ${discountPercent}% off`);
+    } else {
+      messageDiv.innerHTML = `<span style="color: #e74c3c; font-weight: 600;">✗ Invalid coupon code</span>`;
+      appliedCoupon = null;
+      discountPercent = 0;
+      calculateCartTotal();
+    }
+  });
+
+  // Category filtering
+  document.querySelectorAll('.category-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      currentCategory = this.dataset.category;
+      renderProducts();
+    });
+  });
+
+  // Search functionality
+  document.getElementById('search-input').addEventListener('input', function(e) {
+    searchQuery = e.target.value;
+    renderProducts();
+  });
+
+  // Payment method selection
+  document.querySelectorAll('.payment-method').forEach(method => {
+    method.addEventListener('click', function() {
+      document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('selected'));
+      this.classList.add('selected');
+      selectedPaymentMethod = this.dataset.method;
+      
+      document.getElementById('card-form').style.display = selectedPaymentMethod === 'card' ? 'block' : 'none';
+      document.getElementById('upi-form').style.display = selectedPaymentMethod === 'upi' ? 'block' : 'none';
+    });
+  });
+
+  // UPI app selection
+  document.querySelectorAll('.upi-option').forEach(option => {
+    option.addEventListener('click', function() {
+      document.querySelectorAll('.upi-option').forEach(o => o.classList.remove('selected'));
+      this.classList.add('selected');
+      selectedUpiApp = this.dataset.upi;
+      
+      const appNames = {
+        'gpay': 'Google Pay',
+        'phonepe': 'PhonePe',
+        'paytm': 'Paytm',
+        'bhim': 'BHIM',
+        'amazonpay': 'Amazon Pay',
+        'other': 'Other UPI App'
+      };
+      
+      document.getElementById('selected-upi-app').textContent = `Selected: ${appNames[selectedUpiApp]}`;
+    });
+  });
+
+  // Card number formatting
+  document.getElementById('card-number').addEventListener('input', function(e) {
+    e.target.value = formatCardNumber(e.target.value);
+  });
+
+  // Expiry formatting
+  document.getElementById('card-expiry').addEventListener('input', function(e) {
+    e.target.value = formatExpiry(e.target.value);
+  });
+
+  // CVV validation
+  document.getElementById('card-cvv').addEventListener('input', function(e) {
+    e.target.value = e.target.value.replace(/\D/g, '').substring(0, 3);
+  });
+
+  // Card payment form submission
+  document.getElementById('card-payment-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const cardNumber = document.getElementById('card-number').value.replace(/\s/g, '');
+    const cardName = document.getElementById('card-name').value;
+    const cardExpiry = document.getElementById('card-expiry').value;
+    const cardCvv = document.getElementById('card-cvv').value;
+    
+    if (cardNumber.length !== 16) {
+      showToast('Please enter a valid 16-digit card number', true);
+      return;
+    }
+    
+    if (cardExpiry.length !== 5) {
+      showToast('Please enter a valid expiry date (MM/YY)', true);
+      return;
+    }
+    
+    if (cardCvv.length !== 3) {
+      showToast('Please enter a valid 3-digit CVV', true);
+      return;
+    }
+    
+    // Save order before clearing cart
+    saveOrder();
+    
+    // Simulate payment processing
+    document.getElementById('success-modal').style.display = 'flex';
+    cart = [];
+    appliedCoupon = null;
+    discountPercent = 0;
+    saveCart();
+    updateCartCount();
+  });
+
+  // UPI payment form submission
+  document.getElementById('upi-payment-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const upiId = document.getElementById('upi-id').value;
+    
+    if (!selectedUpiApp) {
+      showToast('Please select a UPI app', true);
+      return;
+    }
+    
+    if (!upiId.includes('@')) {
+      showToast('Please enter a valid UPI ID', true);
+      return;
+    }
+    
+    // Save order before clearing cart
+    saveOrder();
+    
+    // Simulate payment processing
+    document.getElementById('success-modal').style.display = 'flex';
+    cart = [];
+    appliedCoupon = null;
+    discountPercent = 0;
+    saveCart();
+    updateCartCount();
+  });
+
+  // Function to save completed order
+  function saveOrder() {
+    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const discount = (subtotal * discountPercent) / 100;
+    const total = subtotal - discount;
+    
+    const order = {
+      id: Date.now().toString().slice(-8),
+      date: new Date().toISOString(),
+      items: [...cart],
+      subtotal: subtotal,
+      discount: discount,
+      total: total,
+      couponCode: appliedCoupon || null
+    };
+    
+    orders.push(order);
+    saveOrders();
+  }
+
+  // Close success modal
+  document.getElementById('close-modal').addEventListener('click', function() {
+    document.getElementById('success-modal').style.display = 'none';
+    showProducts();
+  });
+
+  // Initialize - Load all data from localStorage
+  loadCart();
+  loadWishlist();
+  loadRecentlyViewed();
+  loadOrders();
+  loadTheme();
+  renderProducts();
+  renderRecentlyViewed();
+
+  // Initialize Element SDK
+  if (window.elementSdk) {
+    window.elementSdk.init({
+      defaultConfig,
+      onConfigChange,
+      mapToCapabilities: (config) => ({
+        recolorables: [
+          {
+            get: () => config.primary_color || defaultConfig.primary_color,
+            set: (value) => {
+              config.primary_color = value;
+              window.elementSdk.setConfig({ primary_color: value });
+            }
+          },
+          {
+            get: () => config.accent_color || defaultConfig.accent_color,
+            set: (value) => {
+              config.accent_color = value;
+              window.elementSdk.setConfig({ accent_color: value });
+            }
+          },
+          {
+            get: () => config.background_color || defaultConfig.background_color,
+            set: (value) => {
+              config.background_color = value;
+              window.elementSdk.setConfig({ background_color: value });
+            }
+          }
+        ],
+        borderables: [],
+        fontEditable: undefined,
+        fontSizeable: undefined
+      }),
+      mapToEditPanelValues: (config) => new Map([
+        ["site_name", config.site_name || defaultConfig.site_name],
+        ["tagline", config.tagline || defaultConfig.tagline],
+        ["section_title", config.section_title || defaultConfig.section_title],
+        ["cart_title", config.cart_title || defaultConfig.cart_title],
+        ["checkout_button_text", config.checkout_button_text || defaultConfig.checkout_button_text],
+        ["payment_title", config.payment_title || defaultConfig.payment_title],
+        ["all_category", config.all_category || defaultConfig.all_category]
+      ])
+    });
+  }
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9afe5826f7ea84d1',t:'MTc2NjA1NzU5Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
