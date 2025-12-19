@@ -7,7 +7,7 @@ This is a beginner-friendly web project created using **HTML, CSS, and JavaScrip
 The project is hosted using **GitHub Pages**.
 
 ## 🚀 Live Demo
-🔗 https://your-username.github.io/repository-name/
+https://lahari-333.github.io/e-commerce/
 
 ## 📌 Features
 - Clean and simple UI
