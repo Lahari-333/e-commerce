@@ -1,6 +1,4 @@
- A simple responsive website built using HTML, CSS, and JavaScript and hosted on GitHub Pages.
-👉 If GitHub asks for Website, paste your live link:
-https://your-username.github.io/repository-name/
+
 # HTML Website Project
 
 This is a beginner-friendly web project created using **HTML, CSS, and JavaScript**.
