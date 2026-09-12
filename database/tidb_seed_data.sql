@@ -23,16 +23,16 @@ VALUES
 -- ----------------------------------------------------------------------------
 INSERT IGNORE INTO `users` (`id`, `role_id`, `first_name`, `last_name`, `email`, `password_hash`, `phone`, `is_active`, `created_at`, `updated_at`)
 VALUES
-  (1, 1, 'Demo', 'Customer', 'demo.customer@shopexpress.test', '$2a$10$wT6oB5Kk1j7oGZ8rJc1l.e8wZ3o9vQfR9/wLg7q4y.o8zR8Q2hW.e', '+919876543210', 1, '2026-09-11 13:32:41', '2026-09-11 14:27:12'),
-  (2, 2, 'Demo', 'Admin', 'demo.admin@shopexpress.test', '$2a$10$wT6oB5Kk1j7oGZ8rJc1l.e8wZ3o9vQfR9/wLg7q4y.o8zR8Q2hW.e', '+919876543211', 1, '2026-09-11 13:32:41', '2026-09-11 14:27:12'),
-  (3, 1, 'Alice', 'Smith', 'test_1789136817461@shopexpress.test', '$2a$10$wT6oB5Kk1j7oGZ8rJc1l.e8wZ3o9vQfR9/wLg7q4y.o8zR8Q2hW.e', NULL, 1, '2026-09-11 14:26:57', '2026-09-11 14:26:57'),
-  (4, 1, 'Alice', 'Smith', 'test_1789136838189@shopexpress.test', '$2a$10$wT6oB5Kk1j7oGZ8rJc1l.e8wZ3o9vQfR9/wLg7q4y.o8zR8Q2hW.e', NULL, 1, '2026-09-11 14:27:18', '2026-09-11 14:27:18'),
-  (5, 1, 'Lahari', 'Tummala', 'laharitummala333@gmail.com', '$2a$10$wT6oB5Kk1j7oGZ8rJc1l.e8wZ3o9vQfR9/wLg7q4y.o8zR8Q2hW.e', NULL, 1, '2026-09-11 14:31:57', '2026-09-11 14:31:57'),
-  (6, 1, 'User', 'One', 'cart_user1_1789137840599@test.com', '$2a$10$wT6oB5Kk1j7oGZ8rJc1l.e8wZ3o9vQfR9/wLg7q4y.o8zR8Q2hW.e', NULL, 1, '2026-09-11 14:44:00', '2026-09-11 14:44:00'),
-  (7, 1, 'User', 'Two', 'cart_user2_1789137840599@test.com', '$2a$10$wT6oB5Kk1j7oGZ8rJc1l.e8wZ3o9vQfR9/wLg7q4y.o8zR8Q2hW.e', NULL, 1, '2026-09-11 14:44:01', '2026-09-11 14:44:01'),
-  (8, 1, 'Hacker', 'User', 'intruder_1789140677068@test.com', '$2a$10$wT6oB5Kk1j7oGZ8rJc1l.e8wZ3o9vQfR9/wLg7q4y.o8zR8Q2hW.e', NULL, 1, '2026-09-11 15:31:17', '2026-09-11 15:31:17'),
-  (9, 1, 'Customer', 'Beta', 'test.customer.b@shopexpress.test', '$2a$10$wT6oB5Kk1j7oGZ8rJc1l.e8wZ3o9vQfR9/wLg7q4y.o8zR8Q2hW.e', NULL, 1, '2026-09-11 16:19:04', '2026-09-11 16:19:04'),
-  (10, 1, 'pravallika', '', 'pravallika@gmail.com', '$2a$10$wT6oB5Kk1j7oGZ8rJc1l.e8wZ3o9vQfR9/wLg7q4y.o8zR8Q2hW.e', NULL, 1, '2026-09-12 03:00:27', '2026-09-12 03:00:27');
+  (1, 1, 'Demo', 'Customer', 'demo.customer@shopexpress.test', '$2b$10$ayJwwdUquizUbP6Z4nqRk.Fmjojrzr5T7SqDXM4GgiWtmdeC1Zz6C', '+919876543210', 1, '2026-09-11 13:32:41', '2026-09-11 14:27:12'),
+  (2, 2, 'Demo', 'Admin', 'demo.admin@shopexpress.test', '$2b$10$ayJwwdUquizUbP6Z4nqRk.Fmjojrzr5T7SqDXM4GgiWtmdeC1Zz6C', '+919876543211', 1, '2026-09-11 13:32:41', '2026-09-11 14:27:12'),
+  (3, 1, 'Alice', 'Smith', 'test_1789136817461@shopexpress.test', '$2b$10$ayJwwdUquizUbP6Z4nqRk.Fmjojrzr5T7SqDXM4GgiWtmdeC1Zz6C', NULL, 1, '2026-09-11 14:26:57', '2026-09-11 14:26:57'),
+  (4, 1, 'Alice', 'Smith', 'test_1789136838189@shopexpress.test', '$2b$10$ayJwwdUquizUbP6Z4nqRk.Fmjojrzr5T7SqDXM4GgiWtmdeC1Zz6C', NULL, 1, '2026-09-11 14:27:18', '2026-09-11 14:27:18'),
+  (5, 1, 'Lahari', 'Tummala', 'laharitummala333@gmail.com', '$2b$10$ayJwwdUquizUbP6Z4nqRk.Fmjojrzr5T7SqDXM4GgiWtmdeC1Zz6C', NULL, 1, '2026-09-11 14:31:57', '2026-09-11 14:31:57'),
+  (6, 1, 'User', 'One', 'cart_user1_1789137840599@test.com', '$2b$10$ayJwwdUquizUbP6Z4nqRk.Fmjojrzr5T7SqDXM4GgiWtmdeC1Zz6C', NULL, 1, '2026-09-11 14:44:00', '2026-09-11 14:44:00'),
+  (7, 1, 'User', 'Two', 'cart_user2_1789137840599@test.com', '$2b$10$ayJwwdUquizUbP6Z4nqRk.Fmjojrzr5T7SqDXM4GgiWtmdeC1Zz6C', NULL, 1, '2026-09-11 14:44:01', '2026-09-11 14:44:01'),
+  (8, 1, 'Hacker', 'User', 'intruder_1789140677068@test.com', '$2b$10$ayJwwdUquizUbP6Z4nqRk.Fmjojrzr5T7SqDXM4GgiWtmdeC1Zz6C', NULL, 1, '2026-09-11 15:31:17', '2026-09-11 15:31:17'),
+  (9, 1, 'Customer', 'Beta', 'test.customer.b@shopexpress.test', '$2b$10$ayJwwdUquizUbP6Z4nqRk.Fmjojrzr5T7SqDXM4GgiWtmdeC1Zz6C', NULL, 1, '2026-09-11 16:19:04', '2026-09-11 16:19:04'),
+  (10, 1, 'pravallika', '', 'pravallika@gmail.com', '$2b$10$ayJwwdUquizUbP6Z4nqRk.Fmjojrzr5T7SqDXM4GgiWtmdeC1Zz6C', NULL, 1, '2026-09-12 03:00:27', '2026-09-12 03:00:27');
 
 -- ----------------------------------------------------------------------------
 -- SECTION: ADDRESSES (3 rows)

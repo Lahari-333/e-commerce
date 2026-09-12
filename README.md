@@ -1,76 +1,36 @@
 # Shop Express
 
-A production-ready, full-stack e-commerce web platform built with a high-performance **React + Vite** frontend, a secure **Node.js + Express** REST API, and a normalized **MySQL** relational database.
+A production-ready, full-stack e-commerce web platform built with a high-performance **React + Vite** frontend, a scalable **Node.js + Express** REST API, and a serverless **MySQL-compatible TiDB Cloud** database.
 
-Shop Express delivers an end-to-end shopping experience featuring JWT-based authentication, real-time product discovery, persistent shopping cart, address book management, transaction-safe checkout with inventory deduction, customer wishlists, verified product reviews, and a complete role-protected administrative dashboard.
+Shop Express delivers a modern storefront experience featuring JWT authentication, catalog discovery with real-time keyword search, deep-linked filtering and sorting, persistent shopping carts, address management, transaction-safe checkout with inventory deduction, customer wishlists, verified product reviews, and a complete role-protected administrative dashboard.
+
+---
+
+## 🌐 Live Deployment Links
+
+| Resource | Public Live URL | Description |
+|---|---|---|
+| **Live Storefront (Frontend)** | [https://shop-express-jet.vercel.app](https://shop-express-jet.vercel.app) | Production customer storefront hosted on Vercel Edge |
+| **Backend REST API** | [https://shop-express-api.onrender.com](https://shop-express-api.onrender.com) | Express REST API server hosted on Render Web Service |
+| **API Health Status** | [https://shop-express-api.onrender.com/api/health](https://shop-express-api.onrender.com/api/health) | Live server availability health-check endpoint |
+| **Database Connection Health** | [https://shop-express-api.onrender.com/api/health/db](https://shop-express-api.onrender.com/api/health/db) | Live TiDB Cloud MySQL connection pool verification |
+| **GitHub Repository** | [https://github.com/Lahari-333/e-commerce](https://github.com/Lahari-333/e-commerce) | Official source code repository on GitHub |
 
 ---
 
 ## Table of Contents
-1. [Key Features](#key-features)
-2. [Technology Stack](#technology-stack)
+1. [Technology Stack](#technology-stack)
+2. [Key Features](#key-features)
 3. [Project Architecture & Structure](#project-architecture--structure)
-4. [Prerequisites](#prerequisites)
-5. [Installation & Setup Guide](#installation--setup-guide)
-6. [Environment Variables](#environment-variables)
-7. [REST API Reference](#rest-api-reference)
-8. [Demo Accounts](#demo-accounts)
-9. [Available Scripts](#available-scripts)
-10. [Testing & Verification](#testing--verification)
+4. [Demo Accounts](#demo-accounts)
+5. [Local Development Setup](#local-development-setup)
+6. [Production Deployment Architecture](#production-deployment-architecture)
+7. [Environment Variables](#environment-variables)
+8. [REST API Reference](#rest-api-reference)
+9. [Automated Testing & Quality Verification](#automated-testing--quality-verification)
+10. [Deployment & Operational Notes](#deployment--operational-notes)
 11. [Security Best Practices](#security-best-practices)
-12. [Production Deployment Guide](#production-deployment-guide)
-13. [Future Enhancements](#future-enhancements)
-
----
-
-## Key Features
-
-### 🛍️ Customer Storefront & Shopping Experience
-- **Product Discovery & Exploration:**
-  - Full catalog browsing with server-side pagination (12 items/page default, clamped to max 50).
-  - Multi-field keyword search matching product titles, descriptions, and summaries.
-  - Category filtering by slug or ID with real-time counters.
-  - Multi-criteria sorting: Relevance/Default, Newest, Price: Low to High, Price: High to Low, Name: A to Z, and Highest Rated.
-  - Effective selling price range filtering (`COALESCE(discount_price, base_price)`) with custom min/max inputs and 4 quick presets (Under ₹500, ₹500–₹1,000, ₹1,000–₹2,500, Above ₹2,500).
-  - Deep-link synchronization: search, filters, sorting, and pagination are fully mirrored in URL query strings.
-- **Product Details & Variants:**
-  - Multi-image gallery with primary photo highlight and thumbnail switcher.
-  - Variant selection (e.g., Size, Color, Edition) with dynamic price modifier calculations.
-  - Real-time stock status badges (In Stock, Low Stock, Out of Stock).
-- **Persistent Shopping Cart:**
-  - Database-persisted cart for authenticated customers across sessions and devices.
-  - Support for variant-specific items and strict inventory availability checks.
-  - Quantity controls with live line-item totals and free shipping threshold calculation.
-- **Address Management & Safe Checkout:**
-  - Customer address book supporting default shipping/billing addresses.
-  - Multi-step order placement using database transactions (`START TRANSACTION` / `COMMIT` / `ROLLBACK`).
-  - Row-level inventory locking (`FOR UPDATE`) preventing overselling under concurrent requests.
-  - Instant stock deduction upon successful order placement.
-  - Test Payment and Cash on Delivery (COD) order fulfillment options.
-- **Customer Account & Orders:**
-  - Order history with tracking status badges (Pending, Processing, Confirmed, Shipped, Delivered).
-  - Comprehensive order details with itemized invoice snapshots, delivery address, and timeline.
-- **Wishlist & Customer Reviews:**
-  - One-click wishlist toggle from catalog cards or product details.
-  - 1-to-5 star verified reviews with optional title and text.
-  - Automatic aggregate calculation: average rating, total reviews count, and star distribution.
-
-### 🛡️ Administrative Dashboard & Operations
-- **Role-Based Access Control (RBAC):**
-  - Dedicated admin middleware enforcing `role === 'admin'` on all administrative routes.
-  - Non-admin or unauthenticated access blocked with strict HTTP 401/403 responses.
-- **Catalog Management:**
-  - Create, view, edit, and deactivate products with automated SKU/slug generation.
-  - Manage product categories, hierarchy, and visibility.
-- **Inventory Management:**
-  - Real-time stock tracking across products and variants.
-  - Low stock warning alerts and stock adjustments.
-- **Order Fulfillment:**
-  - Manage all customer orders, filter by status, and update tracking states with audit logs.
-- **Review Moderation:**
-  - Moderate customer ratings and toggle review active status.
-- **User Management:**
-  - View registered customers and staff with role inspection.
+12. [License](#license)
 
 ---
 
@@ -78,18 +38,68 @@ Shop Express delivers an end-to-end shopping experience featuring JWT-based auth
 
 | Layer | Technology | Purpose |
 |---|---|---|
-| **Frontend UI** | [React 19](https://react.dev/) | Declarative component-based user interface |
-| **Build Tool** | [Vite 8](https://vite.dev/) | Next-generation fast frontend bundler & dev server |
-| **Styling** | [Tailwind CSS 4](https://tailwindcss.com/) | Modern utility-first responsive styling |
-| **Icons** | [Lucide React](https://lucide.dev/) | Clean, accessible SVG iconography |
-| **Routing** | [React Router 7](https://reactrouter.com/) | Single Page Application client-side navigation |
-| **Backend Runtime** | [Node.js](https://nodejs.org/) (v18+ / v24+) | Server-side JavaScript runtime environment |
-| **Web Framework** | [Express 5](https://expressjs.com/) | RESTful API server routing and middleware |
-| **Database** | [MySQL 8.0+](https://www.mysql.com/) | Relational database with foreign keys & InnoDB engine |
-| **Database Client** | [mysql2](https://github.com/sidorares/node-mysql2) | High-performance Promise-based connection pooling |
-| **Security / Auth** | [jsonwebtoken](https://github.com/auth0/node-jsonwebtoken) | Stateless JWT authentication tokens |
-| **Password Hashing**| [bcryptjs](https://github.com/dcodeIO/bcrypt.js) | Salted password hashing (10 rounds) |
-| **Code Quality** | [Oxlint](https://oxc-project.github.io/) / ESLint | Fast Rust-based linter for clean code assurance |
+| **Frontend Framework** | [React 19](https://react.dev/) | Declarative component-based reactive user interface |
+| **Build Tooling** | [Vite 8](https://vite.dev/) | Fast ES-module bundler, HMR dev server & asset compiler |
+| **Styling** | [Tailwind CSS 4](https://tailwindcss.com/) | Modern utility-first responsive styling and typography |
+| **Iconography** | [Lucide React](https://lucide.dev/) | Consistent, accessible SVG iconography |
+| **Client Routing** | [React Router 7](https://reactrouter.com/) | SPA client-side routing with deep query string sync |
+| **Backend Runtime** | [Node.js](https://nodejs.org/) (v18+ / v20+ / v24+) | Server-side JavaScript runtime environment |
+| **API Framework** | [Express 5](https://expressjs.com/) | High-performance RESTful API server routing & middleware |
+| **Cloud Database** | [TiDB Cloud](https://tidbcloud.com/) (Serverless) | Cloud MySQL-compatible relational database with TLSv1.2 |
+| **Database Driver** | [mysql2](https://github.com/sidorares/node-mysql2) | Promise-based connection pooling with prepared statements |
+| **Authentication** | [jsonwebtoken](https://github.com/auth0/node-jsonwebtoken) | Stateless JWT tokens for customer & admin authorization |
+| **Password Security**| [bcryptjs](https://github.com/dcodeIO/bcrypt.js) | Salted password hashing (10 rounds) |
+| **Frontend Hosting** | [Vercel](https://vercel.com/) | Global edge network with SPA rewrite rules |
+| **Backend Hosting** | [Render](https://render.com/) | Fully managed cloud Web Service bound to `0.0.0.0:${PORT}` |
+| **Code Quality** | [Oxlint](https://oxc-project.github.io/) | High-speed linter for strict code assurance |
+
+---
+
+## Key Features
+
+### 🛍️ Storefront & Customer Experience
+- **Product Discovery & Exploration:**
+  - Full catalog browsing with server-side pagination (12 items/page default, clamped to max 50).
+  - Multi-field keyword search matching product titles, descriptions, and summaries.
+  - Category filtering by slug or ID with real-time item counts.
+  - Multi-criteria sorting: Relevance/Default, Newest, Price: Low to High, Price: High to Low, Name: A to Z, and Highest Rated.
+  - Effective selling price range filtering (`COALESCE(discount_price, base_price)`) with custom min/max inputs and 4 quick presets.
+  - Deep-link synchronization: search, filters, sorting, and pagination state mirror in URL query parameters.
+- **Product Details & Variants:**
+  - Multi-image photo gallery with primary preview and thumbnail switcher.
+  - Interactive variant selection (e.g. Size, Color, Edition) with dynamic price calculation and stock enforcement.
+  - Real-time stock status indicators (In Stock, Low Stock, Out of Stock).
+- **Persistent Shopping Cart:**
+  - Database-persisted cart for authenticated customers across devices.
+  - Variant-specific item tracking and stock availability limits.
+  - Real-time line-item totals and free shipping threshold calculations.
+- **Address Book & Transaction-Safe Checkout:**
+  - Multiple saved shipping addresses with default address designation.
+  - Atomic database transactions (`START TRANSACTION`, `COMMIT`, `ROLLBACK`) with row-level locking (`FOR UPDATE`) preventing overselling.
+  - Instant stock deduction upon order confirmation.
+  - Test Payment and Cash on Delivery (COD) fulfillment methods.
+- **Order Management & Tracking:**
+  - Order history with status badges (Pending, Processing, Confirmed, Shipped, Delivered).
+  - Itemized order detail receipts with snapshot pricing and delivery address.
+- **Wishlist & Verified Reviews:**
+  - One-click wishlist toggle from product cards or detail pages.
+  - 1-to-5 star verified reviews with ratings, review titles, and text comments.
+  - Aggregate rating calculation with star breakdown.
+
+### 👑 Administrative Operations & Management
+- **Role-Based Access Control (RBAC):**
+  - Dedicated admin middleware enforcing `role === 'admin'` on all `/api/admin` routes.
+- **Dashboard Analytics:**
+  - Live revenue, total orders, customer count, and low-stock alert counters.
+- **Catalog Management:**
+  - Add, update, and deactivate products with SKU and slug generation.
+  - Create and manage product categories.
+- **Inventory Management:**
+  - Monitor stock across products and variants with quick quantity adjustment.
+- **Order Fulfillment:**
+  - View all customer orders and update status (Processing, Shipped, Delivered, Cancelled).
+- **User Management & Review Moderation:**
+  - Inspect registered customers and manage review visibility.
 
 ---
 
@@ -97,488 +107,285 @@ Shop Express delivers an end-to-end shopping experience featuring JWT-based auth
 
 ```
 shop-express/
-├── .gitignore                    # Root production ignore rules
+├── .gitignore                    # Git ignore definitions for node_modules, .env, dist, logs
+├── render.yaml                   # Render Blueprint Infrastructure-as-Code specification
 ├── README.md                     # Comprehensive project documentation
-├── backend/                      # Node.js + Express REST API
-│   ├── .env.example              # Backend environment template
-│   ├── .gitignore                # Backend specific exclusions
-│   ├── package.json              # Backend dependencies and scripts
-│   ├── server.js                 # API server entry point & route mounting
+├── database/
+│   ├── tidb_cloud_migration.sql  # Complete 19-table DDL migration for TiDB Cloud / MySQL
+│   └── tidb_seed_data.sql        # Idempotent seed data (categories, products, demo users, inventory)
+├── backend/
+│   ├── .env.example              # Template for backend environment variables
+│   ├── package.json              # Backend scripts and dependencies
+│   ├── server.js                 # Express application entry point, CORS, and health routes
 │   ├── config/
-│   │   └── db.js                 # MySQL connection pool configuration
-│   ├── controllers/
-│   │   ├── addressController.js  # Customer address management logic
-│   │   ├── adminController.js    # Administrative metrics, catalog & users
-│   │   ├── authController.js     # User registration, login & JWT issuance
-│   │   ├── cartController.js     # Persistent cart operations & stock check
-│   │   ├── categoryController.js # Catalog categories
-│   │   ├── orderController.js    # Transactional checkout & order history
-│   │   ├── productController.js  # Catalog search, filtering, sorting, pagination
-│   │   ├── reviewController.js   # Customer ratings, aggregates & moderation
-│   │   └── wishlistController.js # Customer wishlist operations
-│   ├── middleware/
-│   │   ├── adminMiddleware.js    # Role authorization guard (admin only)
-│   │   └── authMiddleware.js     # JWT verification & customer context
-│   └── routes/
-│       ├── addressRoutes.js      # /api/addresses
-│       ├── adminRoutes.js        # /api/admin
-│       ├── authRoutes.js         # /api/auth
-│       ├── cartRoutes.js         # /api/cart
-│       ├── categoryRoutes.js     # /api/categories
-│       ├── orderRoutes.js        # /api/orders
-│       ├── productRoutes.js      # /api/products
-│       ├── reviewRoutes.js       # /api/products/:id/reviews & /api/reviews
-│       └── wishlistRoutes.js     # /api/wishlist
-├── database/                     # MySQL Relational Schema & Seeds
-│   ├── README.md                 # Database setup and execution guide
-│   ├── schema.sql                # Complete DDL creating all 21 tables & constraints
-│   ├── seed.sql                  # Baseline categories, products, variants, and users
-│   ├── phase10_reviews.sql       # Reviews table migration
-│   └── phase11_products.sql      # 10 realistic e-commerce products with variants
-└── frontend/                     # React + Vite Client Application
-    ├── .env.example              # Frontend environment template
-    ├── .gitignore                # Frontend specific exclusions
-    ├── index.html                # HTML entry point
-    ├── package.json              # Frontend dependencies and build scripts
-    ├── vite.config.js            # Vite bundler configuration with Tailwind
+│   │   └── db.js                 # mysql2 connection pool with automatic TiDB Cloud TLSv1.2 SSL
+│   ├── controllers/              # Business logic (auth, products, cart, orders, reviews, admin)
+│   ├── middleware/               # Authentication and role-authorization middleware
+│   ├── routes/                   # Modular Express route declarations
+│   └── tests/
+│       └── phase13_variants.test.js # Automated 20-point test suite for variants & inventory
+└── frontend/
+    ├── .env.example              # Template for frontend environment variables
+    ├── package.json              # Frontend scripts and Vite dependencies
+    ├── vite.config.js            # Vite bundler configuration
+    ├── vercel.json               # Vercel Single Page Application rewrite rule
+    ├── index.html                # HTML entry point with responsive viewport
     └── src/
-        ├── App.jsx               # Application route definitions & layout
-        ├── main.jsx              # React DOM entry point
-        ├── admin/                # Admin portal views & layouts
-        │   ├── layouts/AdminLayout.jsx
-        │   └── pages/            # Dashboard, Products, Orders, Inventory, Reviews, Users
-        ├── components/           # Reusable UI components
-        │   ├── AdminRoute.jsx    # Protected route for administrators
-        │   ├── CategoryFilter.jsx# Category pills / list filter
-        │   ├── EmptyState.jsx    # Empty search/catalog view with actions
-        │   ├── HeroSection.jsx   # Storefront promotional banner
-        │   ├── Navbar.jsx        # Navigation bar with live cart/wishlist counters
-        │   ├── Pagination.jsx    # Catalog page navigation controls
-        │   ├── PriceFilter.jsx   # Custom min/max inputs & price presets
-        │   ├── ProductCard.jsx   # Product showcase card with rating & actions
-        │   ├── ProductGrid.jsx   # Responsive catalog grid with skeleton loaders
-        │   └── ProtectedRoute.jsx# Authentication guard for customer routes
-        ├── context/              # Global React state management
-        │   ├── AuthContext.jsx   # User authentication & token state
-        │   ├── CartContext.jsx   # Persistent cart synchronization
-        │   └── WishlistContext.jsx# Live customer wishlist state
-        ├── hooks/
-        │   └── useProducts.js    # Product discovery custom hook
-        ├── pages/                # Customer storefront views
-        │   ├── CartPage.jsx
-        │   ├── CheckoutPage.jsx
-        │   ├── HomePage.jsx
-        │   ├── LoginPage.jsx
-        │   ├── OrderDetailsPage.jsx
-        │   ├── OrdersPage.jsx
-        │   ├── ProductDetailsPage.jsx
-        │   ├── ProductListingPage.jsx
-        │   ├── RegisterPage.jsx
-        │   └── WishlistPage.jsx
-        └── services/             # API client services
-            ├── adminApi.js
-            ├── api.js
-            └── reviewApi.js
+        ├── config/
+        │   └── apiConfig.js      # Centralized API base URL resolver and normalizer
+        ├── services/             # Modular API client services (products, auth, cart, orders)
+        ├── context/              # React Context providers (Auth, Cart, Wishlist)
+        ├── components/           # Reusable UI components (Navbar, Footer, ProductCard)
+        ├── pages/                # Customer storefront pages (Home, Catalog, Details, Cart, Checkout)
+        └── admin/                # Role-protected admin portal pages and layouts
 ```
 
 ---
 
-## Prerequisites
+## Demo Accounts
 
-Before getting started, ensure you have installed:
-1. **Node.js**: Version `18.x` or higher (verified on Node.js `v24.x`).
-2. **npm**: Version `9.x` or higher.
-3. **MySQL Server**: Version `8.0` or higher running locally on port `3306` (or via Docker / cloud instance).
+For evaluation and testing, the application includes pre-configured demo credentials:
+
+| Role | Email Address | Password | Access Scope |
+|---|---|---|---|
+| **Customer** | `demo.customer@shopexpress.test` | `password123` | Storefront, Catalog, Cart, Checkout, Wishlist, Orders |
+| **Administrator** | `demo.admin@shopexpress.test` | `password123` | Storefront + Full Admin Portal (`/admin`) |
+
+> 🔒 **Security Notice**: The demo credentials above use standard hashed test accounts. Never commit real production secrets, private keys, or actual user passwords to source control.
 
 ---
 
-## Installation & Setup Guide
+## Local Development Setup
 
-### Step 1: Clone the Repository
+### Prerequisites
+- [Node.js](https://nodejs.org/) version 18 or higher (v20+ recommended)
+- [MySQL 8.0+](https://dev.mysql.com/downloads/) or a free [TiDB Cloud Serverless](https://tidbcloud.com/) account
+- [Git](https://git-scm.com/)
+
+### 1. Clone the Repository
 ```bash
 git clone https://github.com/Lahari-333/e-commerce.git
 cd e-commerce
 ```
 
-### Step 2: Database Setup
-1. Log into your MySQL server:
-   ```bash
-   mysql -u root -p
-   ```
-2. Execute the schema script (creates the `shop_express` database and all 21 tables):
-   ```sql
-   SOURCE database/schema.sql;
-   ```
-3. Load the baseline seed data (roles, categories, core products, demo users):
-   ```sql
-   USE shop_express;
-   SOURCE database/seed.sql;
-   ```
-4. (Optional) Load the extended 10 realistic sample products:
-   ```sql
-   SOURCE database/phase11_products.sql;
-   ```
-
-### Step 3: Configure Backend Environment
-1. Navigate to the backend directory:
-   ```bash
-   cd backend
-   ```
-2. Copy the template and configure your credentials:
-   ```bash
-   cp .env.example .env
-   ```
-3. Open `backend/.env` and enter your MySQL credentials and JWT secret:
-   ```env
-   PORT=5000
-   DB_HOST=localhost
-   DB_USER=root
-   DB_PASSWORD=your_mysql_password
-   DB_NAME=shop_express
-   DB_PORT=3306
-   JWT_SECRET=super_secret_jwt_random_key_replace_in_production
-   JWT_EXPIRES_IN=7d
-   ```
-4. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-### Step 4: Configure Frontend Environment
-1. In a new terminal, navigate to the frontend directory:
-   ```bash
-   cd ../frontend
-   ```
-2. Copy the frontend environment template:
-   ```bash
-   cp .env.example .env
-   ```
-3. Open `frontend/.env` and confirm the API base URL:
-   ```env
-   VITE_API_BASE_URL=http://localhost:5000/api
-   ```
-4. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-### Step 5: Start Development Servers
-
-**1. Start Backend API Server:**
+### 2. Configure and Start Backend
 ```bash
 cd backend
-npm run dev
+npm install
+cp .env.example .env
 ```
-*Backend server will start at `http://localhost:5000`.*
-*Verify health at: `http://localhost:5000/api/health` and `http://localhost:5000/api/health/db`.*
+Edit `backend/.env` with your database credentials:
+```env
+PORT=5000
+HOST=0.0.0.0
+NODE_ENV=development
+FRONTEND_URL=http://localhost:5173
+CLIENT_URL=http://localhost:5173
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=your_local_password
+DB_NAME=shop_express
+DB_SSL=false
+JWT_SECRET=your_super_secret_jwt_key_min_32_chars
+JWT_EXPIRES_IN=7d
+```
+Run the database migration and seed data using MySQL CLI or Workbench:
+- `database/tidb_cloud_migration.sql`
+- `database/tidb_seed_data.sql`
 
-**2. Start Frontend Client:**
+Start the backend development server:
 ```bash
-cd frontend
 npm run dev
 ```
-*Frontend will launch at `http://localhost:5173`.*
+*Backend runs at `http://localhost:5000`. Test: `http://localhost:5000/api/health`*
+
+### 3. Configure and Start Frontend
+```bash
+cd ../frontend
+npm install
+cp .env.example .env
+```
+Ensure `frontend/.env` contains:
+```env
+VITE_API_BASE_URL=http://localhost:5000/api
+```
+Start the frontend development server:
+```bash
+npm run dev
+```
+*Frontend opens at `http://localhost:5173`.*
+
+---
+
+## Production Deployment Architecture
+
+```mermaid
+flowchart LR
+    Client["User Browser"] -->|"HTTPS"| Vercel["Vercel Edge (Frontend SPA)\nshop-express-jet.vercel.app"]
+    Vercel -->|"REST API / JSON"| Render["Render Web Service (Node/Express)\nshop-express-api.onrender.com"]
+    Render -->|"TLSv1.2 (Port 4000)"| TiDB["TiDB Cloud Serverless (MySQL)\nshop_express database"]
+```
+
+### 1. Database: TiDB Cloud Serverless
+- **Host**: AWS Singapore (`gateway01.ap-southeast-1.prod.aws.tidbcloud.com`)
+- **Port**: `4000`
+- **Database**: `shop_express`
+- **Security**: Mandatory TLSv1.2 encryption handled transparently by `backend/config/db.js`.
+
+### 2. Backend: Render Web Service
+- **Root Directory**: `backend`
+- **Build Command**: `npm install`
+- **Start Command**: `npm start`
+- **Required Environment Variables**:
+  - `NODE_ENV=production`
+  - `PORT=5000`
+  - `HOST=0.0.0.0`
+  - `FRONTEND_URL=https://shop-express-jet.vercel.app`
+  - `CLIENT_URL=https://shop-express-jet.vercel.app`
+  - `DB_HOST=<TiDB_Host>`
+  - `DB_PORT=4000`
+  - `DB_USER=<TiDB_User>`
+  - `DB_PASSWORD=<TiDB_Password>`
+  - `DB_NAME=shop_express`
+  - `DB_SSL=true`
+  - `DB_SSL_REJECT_UNAUTHORIZED=true`
+  - `JWT_SECRET=<Secure_32_Character_Random_String>`
+  - `JWT_EXPIRES_IN=7d`
+
+### 3. Frontend: Vercel SPA
+- **Root Directory**: `frontend`
+- **Build Command**: `npm run build`
+- **Output Directory**: `dist`
+- **Environment Variable**: `VITE_API_BASE_URL=https://shop-express-api.onrender.com/api`
+- **Routing**: `vercel.json` provides client-side SPA route rewrites to `/index.html`.
 
 ---
 
 ## Environment Variables
 
 ### Backend (`backend/.env`)
-| Variable | Description | Example Value |
+| Variable | Description | Production Example |
 |---|---|---|
-| `PORT` | HTTP Port for Express server | `5000` |
-| `HOST` | Network interface to bind (0.0.0.0 for cloud hosting) | `0.0.0.0` |
-| `CLIENT_URL` | Deployed frontend domain for CORS authorization | `https://your-app.vercel.app` |
-| `DB_HOST` | MySQL host address | `localhost` / `gateway01...` |
-| `DB_USER` | MySQL database username | `root` / `admin` |
-| `DB_PASSWORD` | MySQL database password | `your_secret_password` |
+| `PORT` | Listening port for Express API | `5000` |
+| `HOST` | Host interface to bind | `0.0.0.0` |
+| `NODE_ENV` | Runtime environment | `production` |
+| `FRONTEND_URL` | Primary allowed CORS origin | `https://shop-express-jet.vercel.app` |
+| `CLIENT_URL` | Fallback allowed CORS origin | `https://shop-express-jet.vercel.app` |
+| `DB_HOST` | MySQL database host address | `gateway01.ap-southeast-1.prod.aws.tidbcloud.com` |
+| `DB_PORT` | MySQL database port (4000 for TiDB) | `4000` |
+| `DB_USER` | MySQL database username | `xxxxxx.root` |
+| `DB_PASSWORD` | MySQL database user password | *(Secret)* |
 | `DB_NAME` | MySQL database name | `shop_express` |
-| `DB_PORT` | MySQL database port | `3306` |
-| `DB_SSL` | Enable SSL for cloud MySQL providers (true/false) | `false` / `true` |
-| `DATABASE_URL` | Optional URI connection string (used by Railway/Render) | `mysql://user:pass@host:port/dbname` |
-| `JWT_SECRET` | Secret signing key for JSON Web Tokens | `your_random_64_char_secret` |
-| `JWT_EXPIRES_IN` | JWT validity duration | `7d` |
+| `DB_SSL` | Enable TLS encryption | `true` |
+| `DB_SSL_REJECT_UNAUTHORIZED` | Validate TLS certificate authority | `true` |
+| `JWT_SECRET` | Secret signing key for JWT tokens | *(Secret 32+ chars)* |
+| `JWT_EXPIRES_IN` | JWT expiration duration | `7d` |
 
 ### Frontend (`frontend/.env`)
-| Variable | Description | Example Value |
+| Variable | Description | Production Value |
 |---|---|---|
-| `VITE_API_BASE_URL` | Target base URL for backend API requests | `https://your-api.onrender.com/api` |
-
-> **⚠️ Security Reminder**: Never commit `.env` files to version control. Both `backend/.gitignore` and `frontend/.gitignore` enforce this. Always use `.env.example` for tracking variable schemas.
-
----
-
-## Production Cloud Deployment Guide
-
-Shop Express is pre-configured for seamless cloud deployment using **Vercel** (Frontend), **Render** (Backend API), and a **Cloud MySQL Provider** (e.g., TiDB Serverless, Aiven, or Railway).
-
-### Step 1: Online MySQL Database Setup
-1. Create a free MySQL database on [TiDB Cloud Serverless](https://tidbcloud.com/), [Aiven](https://aiven.io/), or [Railway](https://railway.com/).
-2. Note your database connection credentials: Host, User, Password, Database Name, and Port (`3306`).
-3. Connect using MySQL Workbench, DBeaver, or command line, and execute:
-   - `database/schema.sql` (creates all 21 tables)
-   - `database/seed.sql` (creates default roles, demo accounts, categories)
-   - `database/phase11_products.sql` (loads catalog products)
-
-### Step 2: Backend Deployment on Render
-1. Go to [dashboard.render.com](https://dashboard.render.com/) and click **New + > Web Service**.
-2. Connect your GitHub repository: `https://github.com/Lahari-333/e-commerce`.
-3. Configure settings:
-   - **Name:** `shop-express-api`
-   - **Root Directory:** `backend`
-   - **Runtime:** `Node`
-   - **Build Command:** `npm install`
-   - **Start Command:** `npm start`
-4. Add Environment Variables:
-   - `PORT`: `5000`
-   - `HOST`: `0.0.0.0`
-   - `NODE_ENV`: `production`
-   - `DB_HOST`: `your-cloud-mysql-host`
-   - `DB_USER`: `your-cloud-mysql-user`
-   - `DB_PASSWORD`: `your-cloud-mysql-password`
-   - `DB_NAME`: `shop_express` (or your cloud db name)
-   - `DB_PORT`: `3306` (or cloud port)
-   - `DB_SSL`: `true`
-   - `JWT_SECRET`: *(A long random secret string)*
-   - `JWT_EXPIRES_IN`: `7d`
-   - `CLIENT_URL`: *(Your Vercel frontend URL from Step 3)*
-5. Click **Deploy Web Service**. Render will assign a public URL (e.g., `https://shop-express-api.onrender.com`).
-
-### Step 3: Frontend Deployment on Vercel
-1. Go to [vercel.com](https://vercel.com/) and click **Add New... > Project**.
-2. Import your GitHub repository: `https://github.com/Lahari-333/e-commerce`.
-3. Configure project settings:
-   - **Framework Preset:** `Vite`
-   - **Root Directory:** `frontend` (Click Edit and select `frontend`)
-   - **Build Command:** `npm run build`
-   - **Output Directory:** `dist`
-4. Expand **Environment Variables** and add:
-   - `VITE_API_BASE_URL`: `https://shop-express-api.onrender.com/api` *(replace with your Render backend URL)*
-5. Click **Deploy**. Vercel will build and assign your live production URL (e.g., `https://shop-express.vercel.app`).
-6. *(Final Step)* In your Render backend dashboard, set `CLIENT_URL` to your live Vercel domain to enforce CORS.
+| `VITE_API_BASE_URL` | Target base URL for backend API requests | `https://shop-express-api.onrender.com/api` |
 
 ---
 
 ## REST API Reference
 
-### 🔐 Authentication APIs (`/api/auth`)
-- `POST /api/auth/register` — Register a new customer account.
-- `POST /api/auth/login` — Authenticate user and receive JWT bearer token.
-- `GET /api/auth/me` — Retrieve current user profile from bearer token.
+### Health Checks
+- `GET /api/health` — Basic API availability check.
+- `GET /api/health/db` — MySQL connection pool & database status check.
 
-### 📦 Product Discovery APIs (`/api/products`)
-- `GET /api/products` — List products with search, category, sort, price, and pagination parameters:
-  - `?page=1&limit=12` — Pagination metadata (`currentPage`, `totalPages`, `hasNextPage`).
-  - `?sort=default|newest|price-asc|price-desc|name-asc|rating-desc` — Safe allowlist sorting.
-  - `?minPrice=500&maxPrice=1500` — Effective selling price range filter.
-  - `?category=electronics` — Category slug or numeric ID.
-  - `?search=speaker` — Keyword search across name and descriptions.
-  - `?featured=true` — Filter featured items.
-- `GET /api/products/featured` — Retrieve top featured products for homepage.
-- `GET /api/products/:slug` — Get full product details including variants, images, and inventory.
+### Authentication (`/api/auth`)
+- `POST /api/auth/register` — Register a customer account (`name`, `email`, `password`).
+- `POST /api/auth/login` — Authenticate customer or admin and return JWT.
+- `GET /api/auth/me` — Retrieve current authenticated user profile.
 
-### 🗂️ Category APIs (`/api/categories`)
+### Catalog & Products (`/api/products`)
+- `GET /api/products` — Paginated catalog with keyword search, categories, price range, and sorting.
+- `GET /api/products/featured` — Homepage featured products list.
+- `GET /api/products/:slug` — Single product details with variant choices, images, and inventory.
+
+### Categories (`/api/categories`)
 - `GET /api/categories` — List all active categories.
 
-### 🛒 Shopping Cart APIs (`/api/cart`)
-- `GET /api/cart` — Get authenticated customer's cart items, subtotal, and stock.
-- `POST /api/cart/items` — Add item (with optional `variant_id`) to cart.
-- `PUT /api/cart/items/:itemId` — Update item quantity with stock validation.
-- `DELETE /api/cart/items/:itemId` — Remove single item from cart.
-- `DELETE /api/cart` — Clear entire cart.
+### Cart Management (`/api/cart`)
+- `GET /api/cart` — Get current customer's persisted cart items and totals.
+- `POST /api/cart/items` — Add product (with optional `variant_id`) to cart.
+- `PUT /api/cart/items/:itemId` — Update line item quantity with real-time stock validation.
+- `DELETE /api/cart/items/:itemId` — Remove item from cart.
+- `DELETE /api/cart` — Clear cart.
 
-### 📍 Address APIs (`/api/addresses`)
-- `GET /api/addresses` — List saved addresses for authenticated user.
+### Addresses (`/api/addresses`)
+- `GET /api/addresses` — List customer's saved shipping addresses.
 - `POST /api/addresses` — Add a new address.
-- `PUT /api/addresses/:id` — Update an existing address.
-- `DELETE /api/addresses/:id` — Delete an address.
-- `PATCH /api/addresses/:id/default` — Set as default shipping address.
+- `PUT /api/addresses/:id` — Update existing address.
+- `DELETE /api/addresses/:id` — Delete address.
+- `PATCH /api/addresses/:id/default` — Set address as primary default.
 
-### 💳 Order & Checkout APIs (`/api/orders`)
-- `POST /api/orders` — Create order from current cart with transaction locking & inventory deduction.
-- `GET /api/orders` — List authenticated user's order history.
-- `GET /api/orders/:orderNumber` — Retrieve complete details of a specific order.
+### Orders & Checkout (`/api/orders`)
+- `POST /api/orders` — Checkout cart using transactional row locking & inventory deduction.
+- `GET /api/orders` — List authenticated user's past orders.
+- `GET /api/orders/:orderNumber` — Retrieve itemized order invoice.
 
-### ❤️ Wishlist APIs (`/api/wishlist`)
-- `GET /api/wishlist` — List items saved in user's wishlist.
-- `POST /api/wishlist` — Add a product to wishlist.
+### Wishlist (`/api/wishlist`)
+- `GET /api/wishlist` — List user's saved wishlist items.
+- `POST /api/wishlist` — Add product to wishlist.
 - `DELETE /api/wishlist/:productId` — Remove product from wishlist.
-- `GET /api/wishlist/check/:productId` — Check if product is in user's wishlist.
 
-### ⭐ Product Review APIs (`/api`)
-- `GET /api/products/:productId/reviews` — List active reviews & aggregate ratings for product.
-- `POST /api/products/:productId/reviews` — Submit review with 1–5 star rating.
-- `PUT /api/reviews/:reviewId` — Update existing review.
-- `DELETE /api/reviews/:reviewId` — Delete review.
+### Reviews (`/api`)
+- `GET /api/products/:productId/reviews` — Fetch verified customer reviews & star aggregates.
+- `POST /api/products/:productId/reviews` — Submit new 1-5 star review.
 
-### 👑 Admin Management APIs (`/api/admin`)
-- `GET /api/admin/dashboard` — Overview metrics (total revenue, order counts, users, stock alerts).
-- `GET /api/admin/products` — List all products with admin controls.
-- `POST /api/admin/products` — Create new product with variants and inventory.
-- `PUT /api/admin/products/:id` — Update product information.
+### Admin Operations (`/api/admin`) *(Requires admin JWT)*
+- `GET /api/admin/dashboard` — Overview metrics (total revenue, orders count, users, low stock).
+- `GET /api/admin/products` — Admin product catalog list.
+- `POST /api/admin/products` — Create new catalog product with inventory.
+- `PUT /api/admin/products/:id` — Edit product details.
 - `DELETE /api/admin/products/:id` — Deactivate product.
-- `GET /api/admin/inventory` — View and update inventory levels.
-- `GET /api/admin/orders` — View all system orders.
-- `PATCH /api/admin/orders/:id/status` — Update fulfillment status (e.g., shipped, delivered).
-- `GET /api/admin/users` — List registered users and role details.
-- `GET /api/admin/reviews` — Moderate customer reviews (approve / hide).
+- `GET /api/admin/inventory` — View inventory status and adjust stock.
+- `GET /api/admin/orders` — View and manage all store orders.
+- `PATCH /api/admin/orders/:id/status` — Update order fulfillment state.
+- `GET /api/admin/users` — List registered users and roles.
+- `GET /api/admin/reviews` — Moderate and approve customer reviews.
 
 ---
 
-## Demo Accounts
+## Automated Testing & Quality Verification
 
-For local development and testing, default accounts are seeded via `database/seed.sql`:
+Shop Express contains automated test suites verifying backend integrity, variant logic, inventory enforcement, and build compilation:
 
-| Role | Email | Password | Access Scope |
-|---|---|---|---|
-| **Customer** | `demo.customer@shopexpress.test` | `password123` | Catalog, Cart, Checkout, Wishlist, Reviews, Orders |
-| **Administrator** | `demo.admin@shopexpress.test` | `password123` | Storefront + Full Admin Portal (`/admin`) |
+1. **Backend Automated Tests (`npm test` in `backend`):**
+   - **Variant Queries**: Variants array, price modifier calculations, variant stock flags.
+   - **Mandatory Selection**: HTTP 400 enforcement when variant is required but omitted.
+   - **Stock Clamping**: HTTP 400 rejection when requested quantity exceeds available variant stock.
+   - **Transaction-Safe Checkout**: Inventory decrements atomically for specific variants.
+   - **Regression Verification**: Non-variant products function without regression.
+   - **Result**: **20/20 checks passed (0 failures)**.
 
-> **Note**: Passwords in `seed.sql` are stored as cryptographically secure `bcrypt` hashes. Always update default credentials before deploying to any publicly accessible environment.
-
----
-
-## Available Scripts
-
-### Backend (`cd backend`)
-- `npm start` — Starts the production Node.js server (`node server.js`).
-- `npm run dev` — Starts development server with auto-reload via `nodemon`.
-
-### Frontend (`cd frontend`)
-- `npm run dev` — Launches Vite local development server with HMR.
-- `npm run build` — Builds optimized production bundle in `frontend/dist/`.
-- `npm run preview` — Locally previews production build.
-- `npm run lint` — Runs fast Oxlint code quality verification.
+2. **Frontend Build & Linter:**
+   - **Oxlint**: 0 code errors.
+   - **Vite Production Build**: Compiles in ~770ms with zero errors.
 
 ---
 
-## Testing & Verification
+## Deployment & Operational Notes
 
-Shop Express includes an automated test suite verifying all critical backend API and e-commerce flows:
-
-1. **Backend Discovery Tests (19/19 passing):**
-   - Default pagination with limit controls.
-   - Page navigation and non-overlapping results between pages.
-   - Keyword search combined with pagination.
-   - Category filtering with pagination.
-   - Min/max price range filtering using effective selling price.
-   - Sort orders: `price-asc`, `price-desc`, `name-asc`, and `rating-desc`.
-   - Combined multi-filter queries.
-   - Graceful fallback for invalid page/limit inputs.
-   - HTTP 400 validation for invalid price ranges (`minPrice > maxPrice`, negative values).
-   - SQL injection immunity on search and sort parameters.
-   - Accurate total count and `hasNextPage` calculations.
-
-2. **Full Regression Verification (19/19 passing):**
-   - Public categories and featured products.
-   - Product details by slug.
-   - Review aggregates calculation.
-   - Role-based admin route protection.
-   - Multi-page product uniqueness across catalog traversal (zero duplicates).
-
-3. **Frontend Build Verification:**
-   - `npm run build` compiles in under 1 second with 0 syntax or bundling errors.
-   - `npm run lint` passes with 0 errors.
+- **Render Free Tier Spin-Down**: Render free web services automatically spin down after 15 minutes of inactivity. When accessed after sleeping, the initial request may take approximately 30 to 50 seconds to spin up the container. Subsequent requests respond instantly.
+- **Payment Processing**: Shop Express is configured with demonstration test payment and Cash on Delivery (COD) fulfillment. No real money or payment credentials are required.
+- **Continuous Deployment**: Both Vercel and Render are integrated with the `main` branch of `https://github.com/Lahari-333/e-commerce` for automated deployment upon git push.
 
 ---
 
 ## Security Best Practices
 
-1. **Environment Secrets Protection**: `.env` files are explicitly ignored in `.gitignore` across the project.
-2. **Safe Parameterized SQL**: All database operations use `mysql2` prepared statements (`?` placeholders) preventing SQL injection.
-3. **Allowlist Sorting**: Order by parameters are strictly validated against an allowlist; unknown parameters safely default to relevance order.
-4. **Password Security**: Customer and admin passwords are never stored in plaintext and use salted `bcrypt` hashing.
-5. **Role Authorization**: All administrative endpoints enforce dual-layer verification (valid JWT + verified `role === 'admin'` check against database).
-6. **Concurrency Protection**: Checkout utilizes MySQL transactions (`START TRANSACTION`, `COMMIT`, `ROLLBACK`) with row locking (`FOR UPDATE`) to prevent inventory race conditions.
-
----
-
-## Production Deployment Guide
-
-Shop Express is architected for zero-cost cloud deployment using industry-standard modern platforms:
-
-| Component | Platform | Configuration |
-|---|---|---|
-| **Database** | [TiDB Cloud Serverless](https://tidbcloud.com/) | Managed MySQL-compatible serverless database with TLS encryption |
-| **Backend REST API** | [Render](https://render.com/) | Node.js Express Web Service bound to `0.0.0.0:${PORT}` |
-| **Frontend Storefront** | [Vercel](https://vercel.com/) | Vite React SPA with client-side SPA rewrites |
-
----
-
-### Step 1: Cloud MySQL Database Setup (TiDB Cloud)
-1. Sign up / log in to [TiDB Cloud](https://tidbcloud.com/) using GitHub authentication.
-2. Click **Create Cluster** and select **TiDB Serverless** (100% free forever, no credit card required).
-3. Name your cluster (e.g., `shop-express`) and choose a region close to your target audience (e.g., Singapore `ap-southeast-1`).
-4. Click **SQL Editor** in the TiDB Cloud console and connect to your cluster.
-5. Create the database schema:
-   - Open [`database/tidb_cloud_migration.sql`](file:///C:/Users/lahar/shop-express/database/tidb_cloud_migration.sql)
-   - Paste the SQL script and click **Run** to provision all 19 tables, indexes, and foreign keys.
-6. Populate initial seed data:
-   - Open [`database/tidb_seed_data.sql`](file:///C:/Users/lahar/shop-express/database/tidb_seed_data.sql)
-   - Paste the SQL script and click **Run** to load categories, products, variants, images, inventory, demo users, addresses, coupons, and reviews.
-7. Click **Connect** in the TiDB Cloud dashboard and select **Node.js / General** to view your connection credentials (`DB_HOST`, `DB_PORT=4000`, `DB_USER`, `DB_PASSWORD`, `DB_NAME=shop_express`).
-
----
-
-### Step 2: Backend REST API Deployment (Render)
-1. Log in to [Render](https://render.com/) and click **New +** -> **Web Service**.
-2. Connect your GitHub repository: `https://github.com/Lahari-333/e-commerce`.
-3. Configure the service settings:
-   - **Name**: `shop-express-api` (or preferred name)
-   - **Region**: Singapore (Southeast Asia) or region closest to TiDB Cloud cluster
-   - **Branch**: `main`
-   - **Root Directory**: `backend`
-   - **Runtime**: `Node`
-   - **Build Command**: `npm install`
-   - **Start Command**: `npm start`
-   - **Plan**: `Free`
-4. Under **Environment Variables**, add the following:
-   - `NODE_ENV`: `production`
-   - `PORT`: `5000` (or leave default assigned by Render)
-   - `HOST`: `0.0.0.0`
-   - `FRONTEND_URL`: `https://shop-express-jet.vercel.app`
-   - `CLIENT_URL`: `https://shop-express-jet.vercel.app`
-   - `DB_HOST`: *<Your TiDB Cloud Host, e.g. gateway01.ap-southeast-1.prod.aws.tidbcloud.com>*
-   - `DB_PORT`: `4000`
-   - `DB_USER`: *<Your TiDB Cloud Username>*
-   - `DB_PASSWORD`: *<Your TiDB Cloud Password>*
-   - `DB_NAME`: `shop_express`
-   - `DB_SSL`: `true`
-   - `DB_SSL_REJECT_UNAUTHORIZED`: `true`
-   - `JWT_SECRET`: *<A secure random 32+ character string>*
-   - `JWT_EXPIRES_IN`: `7d`
-5. Click **Create Web Service**. Wait for Render to build and deploy.
-6. Verify your backend deployment:
-   - Basic Health Check: `GET https://<your-render-app>.onrender.com/api/health` -> `{"status":"ok"}`
-   - Database Health Check: `GET https://<your-render-app>.onrender.com/api/health/db` -> `{"database":"connected"}`
-
----
-
-### Step 3: Frontend Storefront Deployment (Vercel)
-1. The frontend is deployed to Vercel (e.g. `https://shop-express-jet.vercel.app`).
-2. In the [Vercel Dashboard](https://vercel.com/), navigate to your project -> **Settings** -> **Environment Variables**.
-3. Add / Update:
-   - **Key**: `VITE_API_BASE_URL`
-   - **Value**: `https://<your-render-app>.onrender.com/api` (or `https://<your-render-app>.onrender.com` — normalized automatically)
-   - **Target**: Production, Preview, Development
-4. Navigate to the **Deployments** tab and click **Redeploy** on the latest deployment to build with the updated backend URL.
-5. Test the live site:
-   - Browse catalog products, categories, search, price filters, and pagination.
-   - Test variant selection and cart functionality.
-   - Log in with demo customer or admin credentials.
-   - Place an order and review order tracking in the customer profile.
-   - Access the admin panel at `/admin` to verify dashboard statistics.
-
----
-
-## Future Enhancements
-The following features are planned for future major releases:
-- **Payment Gateway Integration**: Direct integration with Razorpay / Stripe for automated card and UPI webhooks.
-- **Transactional Notifications**: Automated email notifications for order confirmation and shipment tracking.
-- **Advanced Analytics**: Visual sales metrics charts and inventory demand forecasting in the admin dashboard.
-- **Containerized Deployment**: Dockerfile and Docker Compose definitions for one-click multi-container deployment.
+1. **Strict Secrets Isolation**: All database passwords, JWT secrets, and connection URIs are managed through cloud environment variables and never checked into Git.
+2. **Prepared SQL Statements**: All database operations use `mysql2` parameterized queries (`?`) to prevent SQL injection vulnerabilities.
+3. **CORS Allowlist**: Express CORS origin handler dynamically validates origins against `FRONTEND_URL`, `CLIENT_URL`, and authorized `.vercel.app` domains.
+4. **Role-Based Middleware**: All administrative routes enforce dual verification (valid JWT bearer token + database role verification).
+5. **Atomic Checkout Transactions**: Concurrency-safe order checkout prevents inventory race conditions.
 
 ---
 
 ## License
+
 This project is licensed under the MIT License.

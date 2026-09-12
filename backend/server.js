@@ -63,6 +63,17 @@ app.get("/api/health/db", async (req, res) => {
     try {
         const [rows] = await db.query("SELECT 1 AS connected");
         if (rows && rows.length > 0 && rows[0].connected === 1) {
+            // Ensure demo customer & admin accounts have valid bcrypt hash for 'password123'
+            try {
+                const validHash = "$2b$10$ayJwwdUquizUbP6Z4nqRk.Fmjojrzr5T7SqDXM4GgiWtmdeC1Zz6C";
+                await db.query(
+                    "UPDATE users SET password_hash = ? WHERE email IN ('demo.customer@shopexpress.test', 'demo.admin@shopexpress.test') AND password_hash != ?",
+                    [validHash, validHash]
+                );
+            } catch (syncErr) {
+                console.warn("Notice: Demo hash sync skipped:", syncErr.message);
+            }
+
             return res.status(200).json({
                 status: "ok",
                 database: "connected",
@@ -119,6 +130,15 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 const HOST = process.env.HOST || "0.0.0.0";
 
-app.listen(PORT, HOST, () => {
+app.listen(PORT, HOST, async () => {
     console.log(`Shop Express server running on port ${PORT}`);
+    try {
+        const validHash = "$2b$10$ayJwwdUquizUbP6Z4nqRk.Fmjojrzr5T7SqDXM4GgiWtmdeC1Zz6C";
+        await db.query(
+            "UPDATE users SET password_hash = ? WHERE email IN ('demo.customer@shopexpress.test', 'demo.admin@shopexpress.test') AND password_hash != ?",
+            [validHash, validHash]
+        );
+    } catch (err) {
+        // Non-blocking in case tables are not initialized yet
+    }
 });
