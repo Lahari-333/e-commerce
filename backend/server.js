@@ -15,13 +15,35 @@ const reviewRoutes = require("./routes/reviewRoutes");
 
 const app = express();
 
-const allowedOrigins = process.env.CLIENT_URL
-  ? [process.env.CLIENT_URL, "http://localhost:5173", "http://localhost:3000"]
-  : true;
+// Normalize configured and standard allowed frontend origins
+const rawFrontendOrigins = [
+  process.env.FRONTEND_URL,
+  process.env.CLIENT_URL,
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "https://shop-express-jet.vercel.app"
+]
+  .filter(Boolean)
+  .flatMap((u) => u.split(",").map((s) => s.trim().replace(/\/+$/, "")));
+
+const allowedOriginsSet = new Set(rawFrontendOrigins);
 
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      // Allow non-browser requests (mobile, server-to-server, health checks, curl)
+      if (!origin) return callback(null, true);
+      const normalizedOrigin = origin.replace(/\/+$/, "");
+      if (
+        allowedOriginsSet.has(normalizedOrigin) ||
+        normalizedOrigin.endsWith(".vercel.app") ||
+        !process.env.NODE_ENV ||
+        process.env.NODE_ENV === "development"
+      ) {
+        return callback(null, true);
+      }
+      return callback(null, false);
+    },
     credentials: true,
   })
 );

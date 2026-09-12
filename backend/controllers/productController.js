@@ -394,19 +394,44 @@ async function getProductBySlug(req, res) {
     `;
     const [images] = await db.query(imagesQuery, [productId]);
 
-    // Fetch product variants
+    // Fetch product variants with variant-specific inventory and media
     const variantsQuery = `
       SELECT 
-        id,
-        sku,
-        variant_name,
-        price_modifier,
-        is_active
-      FROM product_variants
-      WHERE product_id = ? AND is_active = TRUE
-      ORDER BY id ASC
+        pv.id,
+        pv.product_id,
+        pv.sku,
+        pv.variant_name,
+        pv.price_modifier,
+        pv.is_active,
+        COALESCE(inv.quantity - inv.reserved_quantity, 0) AS available_stock,
+        (COALESCE(inv.quantity - inv.reserved_quantity, 0) > 0) AS in_stock,
+        COALESCE(inv.low_stock_threshold, 5) AS low_stock_threshold,
+        (
+          SELECT pi.image_url 
+          FROM product_images pi 
+          WHERE pi.variant_id = pv.id 
+          ORDER BY pi.is_primary DESC, pi.sort_order ASC, pi.id ASC 
+          LIMIT 1
+        ) AS variant_image
+      FROM product_variants pv
+      LEFT JOIN inventory inv ON inv.product_id = pv.product_id AND inv.variant_id = pv.id
+      WHERE pv.product_id = ? AND pv.is_active = TRUE
+      ORDER BY pv.id ASC
     `;
-    const [variants] = await db.query(variantsQuery, [productId]);
+    const [variantRows] = await db.query(variantsQuery, [productId]);
+
+    const formattedVariants = variantRows.map((v) => ({
+      id: v.id,
+      product_id: v.product_id,
+      sku: v.sku,
+      variant_name: v.variant_name,
+      price_modifier: Number(v.price_modifier || 0),
+      is_active: Boolean(v.is_active),
+      available_stock: Math.max(0, Number(v.available_stock || 0)),
+      in_stock: Number(v.available_stock || 0) > 0,
+      low_stock_threshold: Number(v.low_stock_threshold || 5),
+      variant_image: v.variant_image || null
+    }));
 
     // Fetch inventory levels
     const inventoryQuery = `
@@ -456,7 +481,7 @@ async function getProductBySlug(req, res) {
             }
           : null,
         images,
-        variants,
+        variants: formattedVariants,
         inventory: {
           in_stock: totalAvailable > 0,
           total_available: totalAvailable,

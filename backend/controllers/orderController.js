@@ -120,6 +120,20 @@ async function createOrder(req, res) {
         });
       }
 
+      // Check if product has active variants and requires variant selection
+      const [prodVariants] = await connection.query(
+        "SELECT id, variant_name FROM product_variants WHERE product_id = ? AND is_active = TRUE",
+        [item.product_id]
+      );
+      if (prodVariants.length > 0 && !item.variant_id) {
+        await connection.rollback();
+        connection.release();
+        return res.status(400).json({
+          success: false,
+          message: `Please select a variant for "${item.product_name}" before checking out.`
+        });
+      }
+
       // Check and lock inventory row
       let inventoryQuery = `
         SELECT id, quantity, reserved_quantity 
@@ -138,16 +152,15 @@ async function createOrder(req, res) {
 
       const [invRows] = await connection.query(inventoryQuery, invParams);
 
-      if (invRows.length > 0) {
-        const availableStock = invRows[0].quantity - invRows[0].reserved_quantity;
-        if (availableStock < item.quantity) {
-          await connection.rollback();
-          connection.release();
-          return res.status(400).json({
-            success: false,
-            message: `Insufficient stock for "${item.product_name}". Only ${availableStock} unit(s) available.`
-          });
-        }
+      if (invRows.length === 0 || (invRows[0].quantity - invRows[0].reserved_quantity) < item.quantity) {
+        const availableStock = invRows.length > 0 ? Math.max(0, invRows[0].quantity - invRows[0].reserved_quantity) : 0;
+        await connection.rollback();
+        connection.release();
+        const displayName = item.variant_name ? `${item.product_name} (${item.variant_name})` : item.product_name;
+        return res.status(400).json({
+          success: false,
+          message: `Insufficient stock for "${displayName}". Only ${availableStock} unit(s) available.`
+        });
       }
 
       // Calculate price from trusted database values

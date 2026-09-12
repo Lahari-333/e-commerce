@@ -56,15 +56,18 @@ async function getCartForUser(userId) {
           SELECT (inv.quantity - inv.reserved_quantity)
           FROM inventory inv
           WHERE inv.product_id = ci.product_id 
-            AND (inv.variant_id = ci.variant_id OR (inv.variant_id IS NULL AND ci.variant_id IS NULL))
+            AND (
+              (ci.variant_id IS NOT NULL AND inv.variant_id = ci.variant_id)
+              OR (ci.variant_id IS NULL AND (inv.variant_id IS NULL OR inv.variant_id = 0))
+            )
           LIMIT 1
         ),
         (
           SELECT SUM(inv.quantity - inv.reserved_quantity)
           FROM inventory inv
-          WHERE inv.product_id = ci.product_id
+          WHERE inv.product_id = ci.product_id AND ci.variant_id IS NULL
         ),
-        99
+        0
       ) AS available_stock
     FROM cart_items ci
     JOIN products p ON ci.product_id = p.id
@@ -136,13 +139,24 @@ async function getAvailableStock(productId, variantId) {
       [productId, variantId]
     );
     if (rows.length > 0) return Math.max(0, Number(rows[0].stock));
+    return 0; // If variant exists in product_variants but has no inventory record, stock is strictly 0
   }
 
+  // Check product-level inventory record (for products without variants)
   const [rows] = await db.query(
-    "SELECT (quantity - reserved_quantity) AS stock FROM inventory WHERE product_id = ? AND variant_id IS NULL LIMIT 1",
+    "SELECT (quantity - reserved_quantity) AS stock FROM inventory WHERE product_id = ? AND (variant_id IS NULL OR variant_id = 0) LIMIT 1",
     [productId]
   );
   if (rows.length > 0) return Math.max(0, Number(rows[0].stock));
+
+  // If product has variants, stock cannot be lumped together without a variant
+  const [variants] = await db.query(
+    "SELECT id FROM product_variants WHERE product_id = ? AND is_active = TRUE LIMIT 1",
+    [productId]
+  );
+  if (variants.length > 0) {
+    return 0; // Product requires variant selection
+  }
 
   const [sumRows] = await db.query(
     "SELECT SUM(quantity - reserved_quantity) AS stock FROM inventory WHERE product_id = ?",
@@ -152,7 +166,7 @@ async function getAvailableStock(productId, variantId) {
     return Math.max(0, Number(sumRows[0].stock));
   }
 
-  return 99; // Default fallback if no inventory tracking record
+  return 0;
 }
 
 /**
@@ -215,9 +229,25 @@ async function addToCart(req, res) {
       });
     }
 
-    // 3. Verify variant if supplied
+    // 3. Verify variant requirement & validity
     let cleanVariantId = null;
-    if (variant_id !== undefined && variant_id !== null && variant_id !== "") {
+
+    // Check if product has active variants
+    const [productVariants] = await db.query(
+      "SELECT id, variant_name, price_modifier, is_active FROM product_variants WHERE product_id = ? AND is_active = TRUE",
+      [productId]
+    );
+
+    const hasVariants = productVariants.length > 0;
+
+    if (hasVariants) {
+      if (variant_id === undefined || variant_id === null || variant_id === "") {
+        return res.status(400).json({
+          success: false,
+          message: "Please select a product variant before adding to cart"
+        });
+      }
+
       const parsedVarId = parseInt(variant_id, 10);
       if (isNaN(parsedVarId) || parsedVarId <= 0) {
         return res.status(400).json({
@@ -226,17 +256,17 @@ async function addToCart(req, res) {
         });
       }
 
-      const [variantRows] = await db.query(
-        "SELECT id, is_active FROM product_variants WHERE id = ? AND product_id = ? LIMIT 1",
-        [parsedVarId, productId]
-      );
-      if (variantRows.length === 0 || !variantRows[0].is_active) {
+      const matchedVariant = productVariants.find((v) => v.id === parsedVarId);
+      if (!matchedVariant) {
         return res.status(400).json({
           success: false,
-          message: "Selected variant is invalid or inactive"
+          message: "The selected variant is invalid or inactive"
         });
       }
       cleanVariantId = parsedVarId;
+    } else {
+      // Product has NO variants; ignore any extraneous variant_id
+      cleanVariantId = null;
     }
 
     // 4. Check available inventory
@@ -244,7 +274,9 @@ async function addToCart(req, res) {
     if (availableStock <= 0) {
       return res.status(400).json({
         success: false,
-        message: "This product is currently out of stock"
+        message: cleanVariantId
+          ? "The selected variant is currently out of stock"
+          : "This product is currently out of stock"
       });
     }
 

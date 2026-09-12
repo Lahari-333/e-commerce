@@ -32,6 +32,7 @@ export default function ProductDetailsPage() {
   const [product, setProduct] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedVariant, setSelectedVariant] = useState(null);
+  const [variantRequiredError, setVariantRequiredError] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -78,10 +79,10 @@ export default function ProductDetailsPage() {
           setSelectedImage(primary.image_url);
         }
 
-        // Default to first variant if available
-        if (data.variants && data.variants.length > 0) {
-          setSelectedVariant(data.variants[0]);
-        }
+        // Do not auto-select variant so user explicitly selects an option
+        setSelectedVariant(null);
+        setVariantRequiredError(false);
+        setQuantity(1);
       } catch (err) {
         console.error("Failed to load product details:", err);
         setError(err.message || "Product not found");
@@ -136,6 +137,8 @@ export default function ProductDetailsPage() {
     );
   }
 
+  const hasVariants = Boolean(product.variants && product.variants.length > 0);
+
   const basePrice = Number(product.base_price || 0);
   const discountPrice = product.discount_price ? Number(product.discount_price) : null;
   const priceModifier = selectedVariant ? Number(selectedVariant.price_modifier || 0) : 0;
@@ -146,8 +149,38 @@ export default function ProductDetailsPage() {
     ? Math.round(((currentBasePrice - currentPrice) / currentBasePrice) * 100)
     : 0;
 
-  const inStock = product.inventory?.in_stock ?? true;
-  const totalAvailable = product.inventory?.total_available ?? 0;
+  // Stock determination:
+  // - If product has variants: stock is strictly the selected variant's available_stock
+  // - If no variant is selected yet: general stock availability across all variants
+  // - If product has NO variants: stock is the product-level inventory
+  let availableStock = 0;
+  let inStock = false;
+  let isLowStock = false;
+
+  if (hasVariants) {
+    if (selectedVariant) {
+      availableStock = Number(selectedVariant.available_stock || 0);
+      inStock = Boolean(selectedVariant.in_stock && availableStock > 0);
+      isLowStock = inStock && availableStock <= Number(selectedVariant.low_stock_threshold || 5);
+    } else {
+      availableStock = Number(product.inventory?.total_available ?? 0);
+      inStock = availableStock > 0;
+    }
+  } else {
+    availableStock = Number(product.inventory?.total_available ?? 0);
+    inStock = Boolean(product.inventory?.in_stock ?? (availableStock > 0));
+    const itemInv = product.inventory?.items?.[0];
+    isLowStock = inStock && availableStock <= Number(itemInv?.low_stock_threshold || 5);
+  }
+
+  const variantTypeLabel = (() => {
+    if (!product.variants || product.variants.length === 0) return "Available Options";
+    const names = product.variants.map((v) => v.variant_name.toLowerCase());
+    if (names.every((n) => n.includes("size"))) return "Select Size";
+    if (names.every((n) => n.includes("black") || n.includes("white") || n.includes("blue") || n.includes("teal") || n.includes("color") || n.includes("band"))) return "Select Color / Style";
+    if (names.every((n) => n.includes("ml") || n.includes("litre") || n.includes("liter") || n.includes("capacity") || n.includes("gb") || n.includes("tb"))) return "Select Capacity / Volume";
+    return "Select Option / Variant";
+  })();
 
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
@@ -157,6 +190,26 @@ export default function ProductDetailsPage() {
           message: "Please sign in to add items to your cart."
         }
       });
+      return;
+    }
+
+    // Require variant selection when product has variants
+    if (hasVariants && !selectedVariant) {
+      setVariantRequiredError(true);
+      setCartErrorMessage(`Please choose an option (${variantTypeLabel.toLowerCase()}) before adding to cart.`);
+      setTimeout(() => setCartErrorMessage(""), 5000);
+      return;
+    }
+
+    if (!inStock || availableStock <= 0) {
+      setCartErrorMessage("The selected item is currently out of stock.");
+      setTimeout(() => setCartErrorMessage(""), 5000);
+      return;
+    }
+
+    if (quantity > availableStock) {
+      setCartErrorMessage(`Cannot add ${quantity} units. Only ${availableStock} available in stock.`);
+      setTimeout(() => setCartErrorMessage(""), 5000);
       return;
     }
 
@@ -327,57 +380,118 @@ export default function ProductDetailsPage() {
           </div>
 
           {/* Available Variants */}
-          {product.variants && product.variants.length > 0 && (
-            <div className="space-y-3">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                Available Variants
-              </label>
-              <div className="flex flex-wrap gap-2.5">
-                {product.variants.map((v) => (
-                  <button
-                    key={v.id}
-                    type="button"
-                    onClick={() => setSelectedVariant(v)}
-                    className={`px-4 py-2.5 text-xs font-semibold rounded-xl border transition-all ${
-                      selectedVariant?.id === v.id
-                        ? "bg-slate-900 text-white border-slate-900 shadow-sm"
-                        : "bg-white text-slate-700 border-slate-300 hover:border-slate-400"
-                    }`}
-                  >
-                    {v.variant_name}
-                    {Number(v.price_modifier) > 0 && (
-                      <span className="ml-1.5 opacity-80">(+₹{Number(v.price_modifier)})</span>
-                    )}
-                  </button>
-                ))}
+          {hasVariants && (
+            <div className={`space-y-3 p-4 rounded-2xl border transition-all ${
+              variantRequiredError && !selectedVariant
+                ? "bg-rose-50/60 border-rose-300 ring-2 ring-rose-400/20"
+                : "bg-white border-slate-200"
+            }`}>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                  <span>{variantTypeLabel}</span>
+                  <span className="text-rose-500 font-bold">*</span>
+                </label>
+                {selectedVariant ? (
+                  <span className="text-xs text-indigo-600 font-semibold">
+                    Selected: <strong>{selectedVariant.variant_name}</strong>
+                  </span>
+                ) : (
+                  <span className="text-xs text-amber-600 font-medium">
+                    Required selection
+                  </span>
+                )}
               </div>
+
+              <div className="flex flex-wrap gap-2.5">
+                {product.variants.map((v) => {
+                  const isSelected = selectedVariant?.id === v.id;
+                  const isOutOfStock = !v.in_stock;
+
+                  return (
+                    <button
+                      key={v.id}
+                      type="button"
+                      disabled={isOutOfStock}
+                      onClick={() => {
+                        setSelectedVariant(v);
+                        setVariantRequiredError(false);
+                        setCartErrorMessage("");
+                        if (v.variant_image) {
+                          setSelectedImage(v.variant_image);
+                        }
+                        if (v.available_stock > 0 && quantity > v.available_stock) {
+                          setQuantity(v.available_stock);
+                        }
+                      }}
+                      className={`relative px-3.5 py-2.5 text-xs font-semibold rounded-xl border transition-all flex items-center gap-2 ${
+                        isSelected
+                          ? "bg-slate-900 text-white border-slate-900 shadow-sm ring-2 ring-slate-900/20"
+                          : isOutOfStock
+                          ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-60 line-through"
+                          : "bg-white text-slate-700 border-slate-300 hover:border-slate-400 hover:bg-slate-50"
+                      }`}
+                    >
+                      <span>{v.variant_name}</span>
+                      {Number(v.price_modifier) > 0 && (
+                        <span className={isSelected ? "text-indigo-200 font-medium text-[11px]" : "text-indigo-600 font-bold text-[11px]"}>
+                          (+₹{Number(v.price_modifier).toFixed(0)})
+                        </span>
+                      )}
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider ${
+                        isOutOfStock
+                          ? "bg-slate-200 text-slate-500"
+                          : v.available_stock <= (v.low_stock_threshold || 5)
+                          ? isSelected ? "bg-amber-400 text-amber-950" : "bg-amber-100 text-amber-800"
+                          : isSelected ? "bg-emerald-400 text-emerald-950" : "bg-emerald-50 text-emerald-700"
+                      }`}>
+                        {isOutOfStock ? "Sold Out" : v.available_stock <= (v.low_stock_threshold || 5) ? `${v.available_stock} left` : "In Stock"}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {variantRequiredError && !selectedVariant && (
+                <p className="text-xs font-semibold text-rose-600 flex items-center gap-1 mt-1">
+                  <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+                  Please select one of the available {variantTypeLabel.toLowerCase()} to continue.
+                </p>
+              )}
             </div>
           )}
 
           {/* Stock Availability Info */}
           <div className="space-y-4 pt-2">
             <div className="flex items-center gap-2 text-xs">
-              {inStock ? (
+              {hasVariants && !selectedVariant ? (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 text-slate-600 border border-slate-200 rounded-full font-medium">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                  Select an option above to check real-time variant stock
+                </div>
+              ) : inStock ? (
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full font-semibold">
                   <CheckCircle2 className="w-3.5 h-3.5" />
-                  In Stock {totalAvailable > 0 ? `(${totalAvailable} units available in inventory)` : ""}
+                  In Stock ({availableStock} units available{selectedVariant ? ` for ${selectedVariant.variant_name}` : ""})
+                  {isLowStock && (
+                    <span className="ml-1 text-amber-700 font-bold">• Low Stock Warning</span>
+                  )}
                 </div>
               ) : (
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-50 text-rose-700 border border-rose-200 rounded-full font-semibold">
                   <AlertTriangle className="w-3.5 h-3.5" />
-                  Currently Out of Stock
+                  {selectedVariant ? `"${selectedVariant.variant_name}" is currently Out of Stock` : "Currently Out of Stock"}
                 </div>
               )}
             </div>
 
-            {/* Quantity Selector & Add Button (UI only for Phase 5) */}
+            {/* Quantity Selector & Add Button */}
             <div className="space-y-2">
               <div className="flex items-center gap-4">
                 <div className="flex items-center border border-slate-300 rounded-xl bg-white p-1">
                   <button
                     type="button"
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                    disabled={quantity <= 1 || !inStock}
+                    disabled={quantity <= 1 || !inStock || (hasVariants && !selectedVariant)}
                     className="w-9 h-9 flex items-center justify-center text-slate-600 hover:bg-slate-100 rounded-lg disabled:opacity-40"
                   >
                     −
@@ -387,8 +501,8 @@ export default function ProductDetailsPage() {
                   </span>
                   <button
                     type="button"
-                    onClick={() => setQuantity((q) => q + 1)}
-                    disabled={!inStock}
+                    onClick={() => setQuantity((q) => Math.min(availableStock, q + 1))}
+                    disabled={!inStock || (hasVariants && !selectedVariant) || quantity >= availableStock}
                     className="w-9 h-9 flex items-center justify-center text-slate-600 hover:bg-slate-100 rounded-lg disabled:opacity-40"
                   >
                     +
@@ -398,8 +512,14 @@ export default function ProductDetailsPage() {
                 <button
                   type="button"
                   onClick={handleAddToCart}
-                  disabled={!inStock || isAddingToCart}
-                  className="flex-1 inline-flex items-center justify-center gap-2.5 px-6 py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-bold rounded-xl shadow-lg shadow-indigo-600/30 transition-all hover:-translate-y-0.5 disabled:pointer-events-none"
+                  disabled={(hasVariants && selectedVariant && !inStock) || (!hasVariants && !inStock) || isAddingToCart}
+                  className={`flex-1 inline-flex items-center justify-center gap-2.5 px-6 py-3.5 text-sm font-bold rounded-xl shadow-lg transition-all hover:-translate-y-0.5 disabled:pointer-events-none ${
+                    hasVariants && !selectedVariant
+                      ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/30"
+                      : !inStock
+                      ? "bg-slate-300 text-slate-500 shadow-none cursor-not-allowed opacity-60"
+                      : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/30"
+                  }`}
                 >
                   {isAddingToCart ? (
                     <>
@@ -424,6 +544,16 @@ export default function ProductDetailsPage() {
                         ></path>
                       </svg>
                       Adding to Cart...
+                    </>
+                  ) : hasVariants && !selectedVariant ? (
+                    <>
+                      <ShoppingCart className="w-4 h-4" />
+                      Select Option to Add
+                    </>
+                  ) : !inStock ? (
+                    <>
+                      <AlertTriangle className="w-4 h-4" />
+                      Out of Stock
                     </>
                   ) : (
                     <>

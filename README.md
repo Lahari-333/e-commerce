@@ -18,7 +18,8 @@ Shop Express delivers an end-to-end shopping experience featuring JWT-based auth
 9. [Available Scripts](#available-scripts)
 10. [Testing & Verification](#testing--verification)
 11. [Security Best Practices](#security-best-practices)
-12. [Future Enhancements](#future-enhancements)
+12. [Production Deployment Guide](#production-deployment-guide)
+13. [Future Enhancements](#future-enhancements)
 
 ---
 
@@ -489,6 +490,84 @@ Shop Express includes an automated test suite verifying all critical backend API
 4. **Password Security**: Customer and admin passwords are never stored in plaintext and use salted `bcrypt` hashing.
 5. **Role Authorization**: All administrative endpoints enforce dual-layer verification (valid JWT + verified `role === 'admin'` check against database).
 6. **Concurrency Protection**: Checkout utilizes MySQL transactions (`START TRANSACTION`, `COMMIT`, `ROLLBACK`) with row locking (`FOR UPDATE`) to prevent inventory race conditions.
+
+---
+
+## Production Deployment Guide
+
+Shop Express is architected for zero-cost cloud deployment using industry-standard modern platforms:
+
+| Component | Platform | Configuration |
+|---|---|---|
+| **Database** | [TiDB Cloud Serverless](https://tidbcloud.com/) | Managed MySQL-compatible serverless database with TLS encryption |
+| **Backend REST API** | [Render](https://render.com/) | Node.js Express Web Service bound to `0.0.0.0:${PORT}` |
+| **Frontend Storefront** | [Vercel](https://vercel.com/) | Vite React SPA with client-side SPA rewrites |
+
+---
+
+### Step 1: Cloud MySQL Database Setup (TiDB Cloud)
+1. Sign up / log in to [TiDB Cloud](https://tidbcloud.com/) using GitHub authentication.
+2. Click **Create Cluster** and select **TiDB Serverless** (100% free forever, no credit card required).
+3. Name your cluster (e.g., `shop-express`) and choose a region close to your target audience (e.g., Singapore `ap-southeast-1`).
+4. Click **SQL Editor** in the TiDB Cloud console and connect to your cluster.
+5. Create the database schema:
+   - Open [`database/tidb_cloud_migration.sql`](file:///C:/Users/lahar/shop-express/database/tidb_cloud_migration.sql)
+   - Paste the SQL script and click **Run** to provision all 19 tables, indexes, and foreign keys.
+6. Populate initial seed data:
+   - Open [`database/tidb_seed_data.sql`](file:///C:/Users/lahar/shop-express/database/tidb_seed_data.sql)
+   - Paste the SQL script and click **Run** to load categories, products, variants, images, inventory, demo users, addresses, coupons, and reviews.
+7. Click **Connect** in the TiDB Cloud dashboard and select **Node.js / General** to view your connection credentials (`DB_HOST`, `DB_PORT=4000`, `DB_USER`, `DB_PASSWORD`, `DB_NAME=shop_express`).
+
+---
+
+### Step 2: Backend REST API Deployment (Render)
+1. Log in to [Render](https://render.com/) and click **New +** -> **Web Service**.
+2. Connect your GitHub repository: `https://github.com/Lahari-333/e-commerce`.
+3. Configure the service settings:
+   - **Name**: `shop-express-api` (or preferred name)
+   - **Region**: Singapore (Southeast Asia) or region closest to TiDB Cloud cluster
+   - **Branch**: `main`
+   - **Root Directory**: `backend`
+   - **Runtime**: `Node`
+   - **Build Command**: `npm install`
+   - **Start Command**: `npm start`
+   - **Plan**: `Free`
+4. Under **Environment Variables**, add the following:
+   - `NODE_ENV`: `production`
+   - `PORT`: `5000` (or leave default assigned by Render)
+   - `HOST`: `0.0.0.0`
+   - `FRONTEND_URL`: `https://shop-express-jet.vercel.app`
+   - `CLIENT_URL`: `https://shop-express-jet.vercel.app`
+   - `DB_HOST`: *<Your TiDB Cloud Host, e.g. gateway01.ap-southeast-1.prod.aws.tidbcloud.com>*
+   - `DB_PORT`: `4000`
+   - `DB_USER`: *<Your TiDB Cloud Username>*
+   - `DB_PASSWORD`: *<Your TiDB Cloud Password>*
+   - `DB_NAME`: `shop_express`
+   - `DB_SSL`: `true`
+   - `DB_SSL_REJECT_UNAUTHORIZED`: `true`
+   - `JWT_SECRET`: *<A secure random 32+ character string>*
+   - `JWT_EXPIRES_IN`: `7d`
+5. Click **Create Web Service**. Wait for Render to build and deploy.
+6. Verify your backend deployment:
+   - Basic Health Check: `GET https://<your-render-app>.onrender.com/api/health` -> `{"status":"ok"}`
+   - Database Health Check: `GET https://<your-render-app>.onrender.com/api/health/db` -> `{"database":"connected"}`
+
+---
+
+### Step 3: Frontend Storefront Deployment (Vercel)
+1. The frontend is deployed to Vercel (e.g. `https://shop-express-jet.vercel.app`).
+2. In the [Vercel Dashboard](https://vercel.com/), navigate to your project -> **Settings** -> **Environment Variables**.
+3. Add / Update:
+   - **Key**: `VITE_API_BASE_URL`
+   - **Value**: `https://<your-render-app>.onrender.com/api` (or `https://<your-render-app>.onrender.com` — normalized automatically)
+   - **Target**: Production, Preview, Development
+4. Navigate to the **Deployments** tab and click **Redeploy** on the latest deployment to build with the updated backend URL.
+5. Test the live site:
+   - Browse catalog products, categories, search, price filters, and pagination.
+   - Test variant selection and cart functionality.
+   - Log in with demo customer or admin credentials.
+   - Place an order and review order tracking in the customer profile.
+   - Access the admin panel at `/admin` to verify dashboard statistics.
 
 ---
 
