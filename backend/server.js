@@ -74,6 +74,26 @@ app.get("/api/health/db", async (req, res) => {
                 console.warn("Notice: Demo hash sync skipped:", syncErr.message);
             }
 
+            // Ensure orders table schema compatibility
+            try {
+                const alterStatements = [
+                    "ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) NOT NULL DEFAULT 'cod'",
+                    "ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_full_name VARCHAR(255) NULL",
+                    "ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_phone VARCHAR(50) NULL",
+                    "ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_address_line1 VARCHAR(255) NULL",
+                    "ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_address_line2 VARCHAR(255) NULL",
+                    "ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_city VARCHAR(100) NULL",
+                    "ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_state VARCHAR(100) NULL",
+                    "ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_postal_code VARCHAR(20) NULL",
+                    "ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_country VARCHAR(100) NULL"
+                ];
+                for (const sql of alterStatements) {
+                    try { await db.query(sql); } catch {}
+                }
+            } catch (schemaErr) {
+                console.warn("Notice: Orders schema check skipped:", schemaErr.message);
+            }
+
             return res.status(200).json({
                 status: "ok",
                 database: "connected",
@@ -138,6 +158,20 @@ app.listen(PORT, HOST, async () => {
             "UPDATE users SET password_hash = ? WHERE email IN ('demo.customer@shopexpress.test', 'demo.admin@shopexpress.test') AND password_hash != ?",
             [validHash, validHash]
         );
+        const alterStatements = [
+            "ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) NOT NULL DEFAULT 'cod'",
+            "ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_full_name VARCHAR(255) NULL",
+            "ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_phone VARCHAR(50) NULL",
+            "ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_address_line1 VARCHAR(255) NULL",
+            "ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_address_line2 VARCHAR(255) NULL",
+            "ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_city VARCHAR(100) NULL",
+            "ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_state VARCHAR(100) NULL",
+            "ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_postal_code VARCHAR(20) NULL",
+            "ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_country VARCHAR(100) NULL"
+        ];
+        for (const sql of alterStatements) {
+            try { await db.query(sql); } catch {}
+        }
     } catch (err) {
         // Non-blocking in case tables are not initialized yet
     }
