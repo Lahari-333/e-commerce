@@ -286,20 +286,75 @@ npm run dev
 | Variable | Description | Example Value |
 |---|---|---|
 | `PORT` | HTTP Port for Express server | `5000` |
-| `DB_HOST` | MySQL host address | `localhost` |
-| `DB_USER` | MySQL database username | `root` |
+| `HOST` | Network interface to bind (0.0.0.0 for cloud hosting) | `0.0.0.0` |
+| `CLIENT_URL` | Deployed frontend domain for CORS authorization | `https://your-app.vercel.app` |
+| `DB_HOST` | MySQL host address | `localhost` / `gateway01...` |
+| `DB_USER` | MySQL database username | `root` / `admin` |
 | `DB_PASSWORD` | MySQL database password | `your_secret_password` |
 | `DB_NAME` | MySQL database name | `shop_express` |
 | `DB_PORT` | MySQL database port | `3306` |
+| `DB_SSL` | Enable SSL for cloud MySQL providers (true/false) | `false` / `true` |
+| `DATABASE_URL` | Optional URI connection string (used by Railway/Render) | `mysql://user:pass@host:port/dbname` |
 | `JWT_SECRET` | Secret signing key for JSON Web Tokens | `your_random_64_char_secret` |
 | `JWT_EXPIRES_IN` | JWT validity duration | `7d` |
 
 ### Frontend (`frontend/.env`)
 | Variable | Description | Example Value |
 |---|---|---|
-| `VITE_API_BASE_URL` | Target base URL for backend API requests | `http://localhost:5000/api` |
+| `VITE_API_BASE_URL` | Target base URL for backend API requests | `https://your-api.onrender.com/api` |
 
 > **⚠️ Security Reminder**: Never commit `.env` files to version control. Both `backend/.gitignore` and `frontend/.gitignore` enforce this. Always use `.env.example` for tracking variable schemas.
+
+---
+
+## Production Cloud Deployment Guide
+
+Shop Express is pre-configured for seamless cloud deployment using **Vercel** (Frontend), **Render** (Backend API), and a **Cloud MySQL Provider** (e.g., TiDB Serverless, Aiven, or Railway).
+
+### Step 1: Online MySQL Database Setup
+1. Create a free MySQL database on [TiDB Cloud Serverless](https://tidbcloud.com/), [Aiven](https://aiven.io/), or [Railway](https://railway.com/).
+2. Note your database connection credentials: Host, User, Password, Database Name, and Port (`3306`).
+3. Connect using MySQL Workbench, DBeaver, or command line, and execute:
+   - `database/schema.sql` (creates all 21 tables)
+   - `database/seed.sql` (creates default roles, demo accounts, categories)
+   - `database/phase11_products.sql` (loads catalog products)
+
+### Step 2: Backend Deployment on Render
+1. Go to [dashboard.render.com](https://dashboard.render.com/) and click **New + > Web Service**.
+2. Connect your GitHub repository: `https://github.com/Lahari-333/e-commerce`.
+3. Configure settings:
+   - **Name:** `shop-express-api`
+   - **Root Directory:** `backend`
+   - **Runtime:** `Node`
+   - **Build Command:** `npm install`
+   - **Start Command:** `npm start`
+4. Add Environment Variables:
+   - `PORT`: `5000`
+   - `HOST`: `0.0.0.0`
+   - `NODE_ENV`: `production`
+   - `DB_HOST`: `your-cloud-mysql-host`
+   - `DB_USER`: `your-cloud-mysql-user`
+   - `DB_PASSWORD`: `your-cloud-mysql-password`
+   - `DB_NAME`: `shop_express` (or your cloud db name)
+   - `DB_PORT`: `3306` (or cloud port)
+   - `DB_SSL`: `true`
+   - `JWT_SECRET`: *(A long random secret string)*
+   - `JWT_EXPIRES_IN`: `7d`
+   - `CLIENT_URL`: *(Your Vercel frontend URL from Step 3)*
+5. Click **Deploy Web Service**. Render will assign a public URL (e.g., `https://shop-express-api.onrender.com`).
+
+### Step 3: Frontend Deployment on Vercel
+1. Go to [vercel.com](https://vercel.com/) and click **Add New... > Project**.
+2. Import your GitHub repository: `https://github.com/Lahari-333/e-commerce`.
+3. Configure project settings:
+   - **Framework Preset:** `Vite`
+   - **Root Directory:** `frontend` (Click Edit and select `frontend`)
+   - **Build Command:** `npm run build`
+   - **Output Directory:** `dist`
+4. Expand **Environment Variables** and add:
+   - `VITE_API_BASE_URL`: `https://shop-express-api.onrender.com/api` *(replace with your Render backend URL)*
+5. Click **Deploy**. Vercel will build and assign your live production URL (e.g., `https://shop-express.vercel.app`).
+6. *(Final Step)* In your Render backend dashboard, set `CLIENT_URL` to your live Vercel domain to enforce CORS.
 
 ---
 
